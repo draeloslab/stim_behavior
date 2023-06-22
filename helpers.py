@@ -16,7 +16,7 @@ def get_stim_class(stim_type):
     elif ("electrical" in stim_type) or ("hz" in stim_type) or ("one stimulation" in stim_type):
         stimulus = "Electrical"
 
-    return f'{location} {stimulus}'
+    return f'{stimulus} {location}'
 
 def load_metadata(video_filename, total_frames, row, fps, init_frame):
     metadata = {
