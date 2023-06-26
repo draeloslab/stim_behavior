@@ -2,8 +2,29 @@ import numpy as np
 import pandas as pd
 import cv2
 from scipy.ndimage import gaussian_filter1d
+from skimage import transform
 import h5py
 from scipy import ndimage
+
+def downsample_image(img, sz=200):
+    # Define the desired output size
+    output_size = (sz, sz)
+
+    # Calculate the scaling factors
+    height_scale = output_size[0] / img.shape[0]
+    width_scale = output_size[1] / img.shape[1]
+
+    # Determine the scaling factor to preserve aspect ratio
+    scale_factor = min(height_scale, width_scale)
+
+    # Calculate the new dimensions based on the scale factor
+    new_height = int(img.shape[0] * scale_factor)
+    new_width = int(img.shape[1] * scale_factor)
+
+    # Perform downsampling while preserving aspect ratio
+    downsampled_img = transform.resize(img, (new_height, new_width), preserve_range=True).astype(np.uint8)
+
+    return downsampled_img
 
 def load_video(dir, filename, buffer_size = 10):
     video = cv2.VideoCapture(f'{dir}/{filename}.mp4')
