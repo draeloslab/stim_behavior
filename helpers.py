@@ -18,7 +18,7 @@ def get_stim_class(stim_type):
 
     return f'{stimulus} {location}'
 
-def load_metadata(video_filename, total_frames, row, fps, init_frame):
+def load_metadata(video_filename, total_frames, row, fps, init_frame, time_margin = (-0.5, 6)):
     metadata = {
         'stim': {
             't': None,
@@ -39,8 +39,8 @@ def load_metadata(video_filename, total_frames, row, fps, init_frame):
     stim_time = row['End (s)']
     stim_f = int(fps*stim_time)
 
-    start_f = max(0, stim_f- (fps//2 + init_frame))
-    end_f = min(total_frames, stim_f+6*fps-init_frame)
+    start_f = max(0, stim_f - init_frame - int(time_margin[0]*fps))
+    end_f = min(total_frames, stim_f - init_frame + int(time_margin[1]*fps))
 
     classif = row["Classification"]
     stim_type = row["Stimulation Type"]
