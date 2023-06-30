@@ -36,7 +36,7 @@ def load_video(dir, filename, buffer_size = 10):
             raise FileNotFoundError(filename)
     
     # Set your desired buffer size
-    video.set(cv2.CAP_PROP_BUFFERSIZE, buffer_size)
+    # video.set(cv2.CAP_PROP_BUFFERSIZE, buffer_size)
     return video
 
 def reshape_to_2d(frame_flat, box):
@@ -110,53 +110,6 @@ def convert_poses_h5_to_npy(df):
     k = df.shape[1]//d # no of keypoints
     n = df.shape[0] # no of samples/frames
     return df.to_numpy().reshape(n, k, d)
-
-def read_octopus_xlsx(xlxs_path):
-    df = pd.read_excel(xlxs_path) 
-    df2 = df.copy()
-    df = df.drop(index=0)
-    df = df.rename(columns=df2.iloc[0])
-    return df
-
-def convert_xlsx_to_csv(xlxs_path, csv_path):
-    df = pd.read_excel(xlxs_path) 
-    df2 = df.copy()
-    df = df.drop(index=0)
-    df = df.rename(columns=df2.iloc[0])
-    df.to_csv(csv_path, index=False)
-    metadata = {
-        'fps': int(df2.keys()[1])
-    }
-    return metadata
-
-def convert_mp4_to_npy_as_grayscale(video_path, output_path=None):
-    # Open the video file
-    video = cv2.VideoCapture(video_path)
-
-    # Get video properties
-    frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-    frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    # Create an empty numpy array to store the frames
-    frames = np.empty((frame_count, frame_height, frame_width), np.dtype('uint8'))
-
-    # Read and save each frame
-    for i in range(frame_count):
-        ret, frame = video.read()
-        if not ret:
-            break
-        frame = rgb_to_grayscale(frame)
-        frames[i] = frame
-
-    # Save the frames as NPY file
-    if output_path is not None:
-        np.save(output_path, frames)
-
-    # Release the video capture object
-    video.release()
-
-    return frames
 
 def convert_mp4_to_npy(video_path, output_path=None):
     # Open the video file

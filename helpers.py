@@ -1,22 +1,32 @@
 from utils import *
 
-def get_stim_class(stim_type):
+def get_stim_location(stim_type):
     stim_type = stim_type.lower()
-
     location = "Unknown"
     locations = ["Distal" ,"Proximal", "Cord"]
     for loc in locations:
         if loc.lower() in stim_type:
             location = loc
             break
+    return location
 
+def get_stim_method(stim_type):
+    stim_type = stim_type.lower()
     stimulus = "Unknown"
     if ("touch" in stim_type) or ("pinch" in stim_type):
         stimulus = "Mechanical"
     elif ("electrical" in stim_type) or ("hz" in stim_type) or ("one stimulation" in stim_type):
         stimulus = "Electrical"
+    return stimulus
 
-    return f'{stimulus} {location}'
+def load_metadata_new(row, fps=30, time_margin = (-15, 180)):
+    stim = int(fps * row['End (s)'])
+    arr = np.array([
+        stim + time_margin[0],
+        stim + time_margin[1],
+        stim,
+    ])
+    return arr
 
 def load_metadata(video_filename, total_frames, row, fps, init_frame=0, time_margin = (-0.5, 6)):
     metadata = {
@@ -61,6 +71,17 @@ def load_metadata(video_filename, total_frames, row, fps, init_frame=0, time_mar
     }
     return metadata
 
+def read_octopus_xlsx(xls_path):
+    df = pd.read_excel(xls_path) 
+    df2 = df.copy()
+    df = df.drop(index=0)
+    df = df.rename(columns=df2.iloc[0])
+    df['Stim Location'] = df['Stimulation Type'].apply(get_stim_location)
+    df['Stim Method'] = df['Stimulation Type'].apply(get_stim_method)
+    df['Stimulation Class'] = df['Stim Location'] + ' ' + df['Stim Method']
+    df.reset_index(inplace=True)
+    return df
+
 def detect_pose(dlc, frame, index):
     if index == 0:
         pose = dlc.init_inference(frame)
@@ -85,6 +106,10 @@ def detect_crop_box(pose, frame_shape, threshold=0.9, margin=20):
         crop_box = [y1, y2, x1, x2]
 
     return np.array(crop_box)
+
+def detect_crop_box_wrapper(dlc, frame, index, threshold=0.9, margin=40):
+    pose = detect_pose(dlc, frame, index)
+    return detect_crop_box(pose, frame.shape, threshold, margin)
 
 def get_model_path(model_type, dir):
     if model_type == "resnet" :
