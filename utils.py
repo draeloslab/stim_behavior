@@ -49,7 +49,7 @@ def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
     return vector / np.linalg.norm(vector)
 
-def smooth_data(data, kernel_size = 20):
+def smooth_data(data, kernel_size = 5):
     kernel = np.ones(kernel_size) / kernel_size
     data_convolved = ndimage.convolve(data, kernel)
     return data_convolved
