@@ -82,13 +82,6 @@ def read_octopus_xlsx(xls_path):
     df.reset_index(inplace=True)
     return df
 
-def detect_pose(dlc, frame, index):
-    if index == 0:
-        pose = dlc.init_inference(frame)
-    else:
-        pose = dlc.get_pose(frame)
-    return pose
-
 def detect_crop_box(pose, frame_shape, threshold=0.9, margin=20):
     detected = pose[:, 2] > threshold
 
