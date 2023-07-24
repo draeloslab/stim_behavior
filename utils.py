@@ -5,6 +5,21 @@ from scipy.ndimage import gaussian_filter1d
 from skimage import transform
 import h5py
 from scipy import ndimage
+import os
+
+def delete_files(file_list):
+    for file_path in file_list:
+        try:
+            os.remove(file_path)
+            print(f"Deleted file: {file_path}")
+        except OSError as e:
+            print(f"Error deleting file: {file_path} - {e}")
+
+def list_files(folder_path):
+    files = os.listdir(folder_path)
+    file_paths = [os.path.join(folder_path, file_name) for file_name in files]
+    file_paths = [file_path for file_path in file_paths if os.path.isfile(file_path)]
+    return file_paths
 
 def downsample_image(img, sz=200):
     # Define the desired output size
@@ -55,14 +70,7 @@ def smooth_data(data, kernel_size = 5):
     return data_convolved
 
 def angle_between(v1, v2):
-    """ Returns the angle in radians between vectors 'v1' and 'v2'::
-
-            >>> angle_between((1, 0, 0), (0, 1, 0))
-            1.5707963267948966
-            >>> angle_between((1, 0, 0), (1, 0, 0))
-            0.0
-            >>> angle_between((1, 0, 0), (-1, 0, 0))
-            3.141592653589793
+    """ Returns the angle in degree between vectors 'v1' and 'v2'::
     """
     v1_u = unit_vector(v1)
     v2_u = unit_vector(v2)

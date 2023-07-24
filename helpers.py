@@ -20,6 +20,7 @@ def get_stim_method(stim_type):
     return stimulus
 
 def load_metadata_new(row, fps=30, time_margin = (-15, 180)):
+    if row is None: return np.array([0, None, None])
     stim = int(fps * row['End (s)'])
     arr = np.array([
         stim + time_margin[0],
