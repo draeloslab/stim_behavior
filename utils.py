@@ -41,19 +41,6 @@ def downsample_image(img, sz=200):
 
     return downsampled_img
 
-def load_video(dir, filename, buffer_size = 10):
-    video = cv2.VideoCapture(f'{dir}/{filename}.mp4')
-    if not video.isOpened():
-        # Trying again by appending '-1' to filename
-        video = cv2.VideoCapture(f'{dir}/{filename}-1.mp4')
-        if not video.isOpened():
-            print("File not found:", filename)
-            raise FileNotFoundError(filename)
-    
-    # Set your desired buffer size
-    # video.set(cv2.CAP_PROP_BUFFERSIZE, buffer_size)
-    return video
-
 def reshape_to_2d(frame_flat, box):
     w = box[1]-box[0]
     h = box[3]-box[2]

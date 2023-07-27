@@ -19,6 +19,16 @@ def get_stim_method(stim_type):
         stimulus = "Electrical"
     return stimulus
 
+def load_video(dir, filename):
+    video = cv2.VideoCapture(f'{dir}/{filename}.mp4')
+    if not video.isOpened():
+        # Trying again by appending '-1' to filename
+        video = cv2.VideoCapture(f'{dir}/{filename}-1.mp4')
+        if not video.isOpened():
+            print("File not found:", filename)
+            raise FileNotFoundError(filename)
+    return video
+
 def load_metadata_new(row, fps=30, time_margin = (-15, 180)):
     if row is None: return np.array([0, None, None])
     stim = int(fps * row['End (s)'])
