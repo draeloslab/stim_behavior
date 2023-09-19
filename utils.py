@@ -21,6 +21,15 @@ def list_files(folder_path):
     file_paths = [file_path for file_path in file_paths if os.path.isfile(file_path)]
     return file_paths
 
+def fill_nan_linear_interpolation_axis(arr, axis):
+    def fill_nan_linear_interpolation(row):
+        nan_mask = np.isnan(row)
+        indices = np.arange(len(row))
+        row[nan_mask] = np.interp(indices[nan_mask], indices[~nan_mask], row[~nan_mask])
+        return row
+    
+    return np.apply_along_axis(fill_nan_linear_interpolation, axis, arr)
+
 def downsample_image(img, sz=200):
     # Define the desired output size
     output_size = (sz, sz)

@@ -19,6 +19,76 @@ def get_stim_method(stim_type):
         stimulus = "Electrical"
     return stimulus
 
+
+def find_unit(feature):
+    feature = feature.lower()
+    if 'angle' in feature:
+        return '°'
+    elif 'angular speed' in feature:
+        return '°/ms'
+    elif 'speed' in feature:
+        return 'unit'
+    else:
+        return ''
+
+def fill_nan_linear_interpolation_axis(arr, axis):
+    def fill_nan_linear_interpolation(row):
+        nan_mask = np.isnan(row)
+        nan_len = np.sum(nan_mask)
+        indices = np.arange(len(row))
+        row[nan_mask] = np.interp(indices[nan_mask], indices[~nan_mask], row[~nan_mask])
+        return row
+    return np.apply_along_axis(fill_nan_linear_interpolation, axis, arr)
+
+def compute_L(xy):
+    feat = xy
+    feat = np.diff(feat, axis=-2)
+    feat = np.square(feat)
+    feat = np.sqrt(np.sum(feat, axis=-1))
+    L = np.sum(feat, axis=-1)
+    return L
+
+def find_speed(xy):
+    def normalize(speed):
+        L = compute_L(xy)
+        L = L.mean()
+        speed /= L
+        return speed
+
+    pose_vel = np.diff(xy, axis=0)
+    pose_speed = np.linalg.norm(pose_vel, axis=-1).squeeze()
+    pose_speed = np.insert(pose_speed, 0, 0, axis=0)
+    pose_speed = normalize(pose_speed)
+    return pose_speed
+
+def clean_XY_by_speed(xy):
+    pose_speed = find_speed(xy)
+    xy[pose_speed > 0.4] = np.nan
+    xy = fill_nan_linear_interpolation_axis(xy, axis=0)
+    return xy
+
+def find_point_point_distance(xy):
+    feat = xy
+    feat = np.diff(feat, axis=-2)
+    feat = np.square(feat)
+    feat = np.sqrt(np.sum(feat, axis=-1))
+
+    L = np.sum(feat, axis=-1, keepdims=True)
+    feat /= L
+
+    # IDEAL_LENGTH = np.array([1/2, 1/4, 1/8, 1/8])
+    IDEAL_LENGTH = 1/16*np.ones(16)
+    feat -= IDEAL_LENGTH
+    feat = np.linalg.norm(feat, axis=-1)
+    return feat
+
+def clean_XY_by_point_position(xy):
+    pp_distance = find_point_point_distance(xy)
+    xy[pp_distance > 0.25] = np.nan
+    # pdb.set_trace()
+    xy = fill_nan_linear_interpolation_axis(xy, axis=0)
+    return xy
+
 def load_video(dir, filename):
     video = cv2.VideoCapture(f'{dir}/{filename}.mp4')
     if not video.isOpened():
@@ -29,7 +99,7 @@ def load_video(dir, filename):
             raise FileNotFoundError(filename)
     return video
 
-def load_metadata_new(row, fps=30, time_margin = (-15, 180)):
+def load_metadata_new(row, fps=30, time_margin=None):
     if row is None: return np.array([0, None, None])
     stim = int(fps * row['End (s)'])
     arr = np.array([
@@ -110,6 +180,13 @@ def detect_crop_box(pose, frame_shape, threshold=0.9, margin=20):
         crop_box = [y1, y2, x1, x2]
 
     return np.array(crop_box)
+    
+def detect_pose(dlc, frame, index):
+    if index == 0:
+        pose = dlc.init_inference(frame)
+    else:
+        pose = dlc.get_pose(frame)
+    return pose
 
 def detect_crop_box_wrapper(dlc, frame, index, threshold=0.9, margin=40):
     pose = detect_pose(dlc, frame, index)

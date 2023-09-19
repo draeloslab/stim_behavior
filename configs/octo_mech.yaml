@@ -1,0 +1,13 @@
+path:
+  root: /home/sachinks/Code/MyProjects
+  
+  video: OctopusVideos/videos
+  
+  xls: OctopusVideos/metadata.xlsx
+  
+  working: work_dir/octo_mech
+
+  model: exported_models/DLC_Tent6_mobilenet_v2_0.35_iteration-0_shuffle-1
+
+info:
+  fps: 30
