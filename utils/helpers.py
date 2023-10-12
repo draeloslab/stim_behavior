@@ -19,6 +19,13 @@ def get_stim_method(stim_type):
         stimulus = "Electrical"
     return stimulus
 
+def convert_from_seconds_to_frames(interval, fps, time_margin):
+    interval[-1][-1] = 0
+    interval = np.array(interval)
+    interval = interval*fps - time_margin[0]
+    interval = interval.tolist()
+    interval[-1][-1] = None
+    return interval
 
 def find_unit(feature):
     feature = feature.lower()
