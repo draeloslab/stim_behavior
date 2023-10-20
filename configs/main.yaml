@@ -1,0 +1,6 @@
+path:
+  data:
+    root: /home/sachinks/Data
+    raw: raw
+    processed: processed
+    output: output

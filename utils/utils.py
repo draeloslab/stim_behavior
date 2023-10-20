@@ -6,6 +6,38 @@ from skimage import transform
 import h5py
 from scipy import ndimage
 import os
+import random
+
+def stream_numpy_array(numpy_array, batch_size=1):
+    """
+    Stream a Numpy array in batches.
+
+    Parameters:
+        - numpy_array: The Numpy array to be streamed.
+        - batch_size: The number of elements to yield in each batch.
+
+    Yields:
+        - A batch of elements from the Numpy array.
+    """
+    for i in range(0, len(numpy_array), batch_size):
+        yield numpy_array[i:i + batch_size]
+
+def load_random_file(directory, seed=0):
+    # Set the seed for reproducibility
+    random.seed(seed)
+
+    # Get a list of files in the directory
+    files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+
+    if not files:
+        print("No files found in the specified directory.")
+        return None
+
+    # Choose a random file from the list
+    random_file = random.choice(files)
+
+    # Return the randomly selected file path
+    return os.path.join(directory, random_file)
 
 def delete_files(file_list):
     for file_path in file_list:
