@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import minimize
 
 class GaussianProcess:
-    def __init__(self, l=1.0, sigma_f=1.0, std=0.05, domain_range=(-5, 5), d=100):
+    def __init__(self, l=1.0, sigma_f=1.0, std=0.05, domain_range=(-4, 4), d=100):
         self.l = l
         self.sigma_f = sigma_f
         self.std = std #maybe turn this into a child of Bayesian Optimization so it can inherit the below two variables
@@ -31,7 +32,7 @@ class BayesianOptimization:
     def initialize_query(self, n=10, d=100):
         X = np.random.uniform(-3, 3, size=(n, 1))
         Y = self.call_function(X)
-        domain = np.linspace(-5, 5, d).reshape(-1, 1)
+        domain = np.linspace(-4, 4, d).reshape(-1, 1)
         return X, Y, domain
 
     def upper_confidence_bound(self, mean, variance, kappa=2):
@@ -40,6 +41,8 @@ class BayesianOptimization:
     def run_iterations(self, T, plot=False):
         X, Y, domain = self.initialize_query()
         gp = GaussianProcess()
+        max_value = float('-inf')
+        max_index = None
         for i in range(T):
             mean, variance = gp.posterior_update(X, Y, domain, self.std)
             ucb_values = self.upper_confidence_bound(mean, variance)
@@ -48,9 +51,12 @@ class BayesianOptimization:
             Y_new = self.call_function(X_new).flatten()
             X = np.vstack((X, X_new))
             Y = np.vstack((Y, Y_new))
+            if Y_new > max_value:
+                max_value = Y_new
+                max_index = index
             if plot:
                 self.plot_iteration(i+1, domain, mean, variance, X, Y, X_new, index)
-        return X, Y
+        return X, Y, max_value, max_index
 
     def plot_iteration(self, iteration, domain, mean, variance, X, Y, X_new, index):
         plt.figure(figsize=(12,6))
@@ -68,7 +74,16 @@ class BayesianOptimization:
 
 if __name__ == "__main__":
     bo = BayesianOptimization(std=0.05)
-    X, Y = bo.run_iterations(T=5, plot=True)
+    _, _, max_value, max_index = bo.run_iterations(T=15, plot=True)
+    print(f"Maximum Value: {max_value}")
+    print(f"Maximum Index: {max_index}")
+    
+    def f(x):
+        return -np.sin(x)
+    opt = minimize(f,x0=0, bounds=[(-5, 5)])
+
+    print(f"True Maximum Value: {opt.x}")
+    print(f"True Maximum Index: {opt.fun}")
 
 
 
