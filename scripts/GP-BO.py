@@ -26,8 +26,13 @@ class BayesianOptimization:
     def __init__(self, std=0.05):
         self.std = std
 
-    def call_function(self, x):
-        return np.sin(x) + np.random.normal(0, self.std)
+    def call_function(self, x, function='sin'):
+        if function == 'sin':
+            return np.sin(x) + np.random.normal(0, self.std)
+        elif function == 'levy':
+            return np.sin(3*np.pi*x)**2 + (x-1)**2 * (1 + np.sin(3*np.pi*x)**2)
+        else:
+            raise ValueError("Invalid function argument. Please choose 'sin' or 'levy'.")
 
     def initialize_query(self, n=10, d=100):
         X = np.random.uniform(-3, 3, size=(n, 1))
@@ -77,13 +82,16 @@ class BayesianOptimization:
 
 if __name__ == "__main__":
     bo = BayesianOptimization(std=0.05)
-    _, _, max_value, max_index = bo.run_iterations(T=30, plot=False)
+    _, _, max_value, max_index = bo.run_iterations(T=5, plot=True)
     domain = bo.getDomain()
     print(f"Maximum Value: {max_value}")
     print(f"Maximum Index: {domain[max_index]}")
     
     def f(x):
         return np.sin(x)
+    def f2(x):
+        return np.sin(3*np.pi*x)**2 + (x-1)**2 * (1 + np.sin(3*np.pi*x)**2)
+    
     opt = minimize(lambda x: -f(x),x0=0, bounds=[(-5, 5)])
 
     print(f"True Maximum Value: {f(opt.x)}")
