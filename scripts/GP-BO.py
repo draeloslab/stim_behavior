@@ -32,8 +32,8 @@ class BayesianOptimization:
     def initialize_query(self, n=10, d=100):
         X = np.random.uniform(-3, 3, size=(n, 1))
         Y = self.call_function(X)
-        domain = np.linspace(-4, 4, d).reshape(-1, 1)
-        return X, Y, domain
+        self.domain = np.linspace(-4, 4, d).reshape(-1, 1)
+        return X, Y, self.domain
 
     def upper_confidence_bound(self, mean, variance, kappa=2):
         return mean.flatten() + kappa * np.sqrt(np.diag(variance))
@@ -72,18 +72,22 @@ class BayesianOptimization:
         plt.grid(True)
         plt.show()
 
+    def getDomain(self):
+        return self.domain
+
 if __name__ == "__main__":
     bo = BayesianOptimization(std=0.05)
-    _, _, max_value, max_index = bo.run_iterations(T=15, plot=True)
+    _, _, max_value, max_index = bo.run_iterations(T=30, plot=False)
+    domain = bo.getDomain()
     print(f"Maximum Value: {max_value}")
-    print(f"Maximum Index: {max_index}")
+    print(f"Maximum Index: {domain[max_index]}")
     
     def f(x):
-        return -np.sin(x)
-    opt = minimize(f,x0=0, bounds=[(-5, 5)])
+        return np.sin(x)
+    opt = minimize(lambda x: -f(x),x0=0, bounds=[(-5, 5)])
 
-    print(f"True Maximum Value: {opt.x}")
-    print(f"True Maximum Index: {opt.fun}")
+    print(f"True Maximum Value: {f(opt.x)}")
+    print(f"True Maximum Index: {opt.x}")
 
 
 
