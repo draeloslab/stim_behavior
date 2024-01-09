@@ -12,6 +12,13 @@ class GaussianProcess:
     def rbf_kernel(self, x1, x2):
         sqdist = np.sum(x1**2, 1).reshape(-1, 1) + np.sum(x2**2, 1) - 2 * np.dot(x1, x2.T)
         return self.sigma_f**2 * np.exp(-0.5 * sqdist / self.l**2)
+    
+    def matern_kernel(self, x1, x2, l):
+
+        return (1 + (np.sqrt(5)/l )* self.euclidian(x1,x2) + (5/3*l)*self.euclidian(x1,x2)**2)*np.exp((-np.sqrt(5)/l)*self.euclidian(x1,x2))
+    
+    def euclidian(self, x1, x2):
+        return np.sqrt(np.sum((x1-x2)**2))
 
     def posterior_update(self, X, Y, domain, std):
         K = self.rbf_kernel(X, X) + (std**2) * np.eye(len(X))
