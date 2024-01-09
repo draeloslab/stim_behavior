@@ -71,7 +71,7 @@ class BayesianOptimization:
         return X, Y, max_value, max_index
 
     def plot_iteration(self, iteration, domain, mean, variance, X, Y, X_new, index):
-        plt.figure(figsize=(12,6))
+        # plt.figure(figsize=(12,6))
         plt.plot(domain, self.call_function(domain), 'y:', label='True Function')
         plt.plot(domain, mean, 'k', lw=2, zorder=9, label='GP Mean')
         plt.fill_between(domain.flatten(), mean.flatten() - 2 * np.sqrt(np.diag(variance)), mean.flatten() + 2 * np.sqrt(np.diag(variance)), alpha=0.2, color='k')
@@ -89,7 +89,7 @@ class BayesianOptimization:
 
 if __name__ == "__main__":
     bo = BayesianOptimization(std=0.05)
-    _, _, max_value, max_index = bo.run_iterations(T=5, plot=True)
+    _, _, max_value, max_index = bo.run_iterations(T=1, plot=True)
     domain = bo.getDomain()
     print(f"Maximum Value: {max_value}")
     print(f"Maximum Index: {domain[max_index]}")
@@ -97,9 +97,10 @@ if __name__ == "__main__":
     def f(x):
         return np.sin(x)
     def f2(x):
+
         return np.sin(3*np.pi*x)**2 + (x-1)**2 * (1 + np.sin(3*np.pi*x)**2)
     
-    opt = minimize(lambda x: -f(x),x0=0, bounds=[(-5, 5)])
+    opt = minimize(lambda x: -f2(x),x0=0, bounds=[(-5, 5)])
 
     print(f"True Maximum Value: {f(opt.x)}")
     print(f"True Maximum Index: {opt.x}")
