@@ -30,10 +30,38 @@ class GaussianProcess:
 
 
 class BayesianOptimization:
+    """
+    Class for performing Bayesian Optimization.
+
+    Attributes:
+        std (float): Standard deviation for noise in the objective function.
+
+    Methods:
+        call_function(x, function='sin'): Evaluates the objective function at a given point.
+        initialize_query(n=10, d=100): Initializes the query points and the domain.
+        upper_confidence_bound(mean, variance, kappa=2): Computes the upper confidence bound.
+        run_iterations(T, plot=False): Runs the Bayesian Optimization iterations.
+        plot_iteration(iteration, domain, mean, variance, X, Y, X_new, index): Plots the iteration results.
+        getDomain(): Returns the domain of the optimization problem.
+    """
+
     def __init__(self, std=0.05):
         self.std = std
 
     def call_function(self, x, function='sin'):
+        """
+        Evaluates the objective function at a given point.
+
+        Args:
+            x (float): The input value.
+            function (str): The name of the objective function. Default is 'sin'.
+
+        Returns:
+            float: The value of the objective function at the given point.
+        
+        Raises:
+            ValueError: If an invalid function argument is provided.
+        """
         if function == 'sin':
             return np.sin(x) + np.random.normal(0, self.std)
         elif function == 'levy':
@@ -42,15 +70,46 @@ class BayesianOptimization:
             raise ValueError("Invalid function argument. Please choose 'sin' or 'levy'.")
 
     def initialize_query(self, n=10, d=100):
+        """
+        Initializes the query points and the domain.
+
+        Args:
+            n (int): The number of initial query points. Default is 10.
+            d (int): The number of points in the domain. Default is 100.
+
+        Returns:
+            tuple: A tuple containing the initialized query points, the corresponding function values, and the domain.
+        """
         X = np.random.uniform(-3, 3, size=(n, 1))
         Y = self.call_function(X)
         self.domain = np.linspace(-4, 4, d).reshape(-1, 1)
         return X, Y, self.domain
 
     def upper_confidence_bound(self, mean, variance, kappa=2):
+        """
+        Computes the upper confidence bound.
+
+        Args:
+            mean (ndarray): The mean values of the Gaussian process.
+            variance (ndarray): The variance values of the Gaussian process.
+            kappa (float): The exploration parameter. Default is 2.
+
+        Returns:
+            ndarray: The upper confidence bound values.
+        """
         return mean.flatten() + kappa * np.sqrt(np.diag(variance))
 
     def run_iterations(self, T, plot=False):
+        """
+        Runs the Bayesian Optimization iterations.
+
+        Args:
+            T (int): The number of iterations to run.
+            plot (bool): Whether to plot the iteration results. Default is False.
+
+        Returns:
+            tuple: A tuple containing the query points, the corresponding function values, the maximum function value, and the index of the maximum value.
+        """
         X, Y, domain = self.initialize_query()
         gp = GaussianProcess()
         max_value = float('-inf')
@@ -71,6 +130,19 @@ class BayesianOptimization:
         return X, Y, max_value, max_index
 
     def plot_iteration(self, iteration, domain, mean, variance, X, Y, X_new, index):
+        """
+        Plots the iteration results.
+
+        Args:
+            iteration (int): The iteration number.
+            domain (ndarray): The domain of the optimization problem.
+            mean (ndarray): The mean values of the Gaussian process.
+            variance (ndarray): The variance values of the Gaussian process.
+            X (ndarray): The query points.
+            Y (ndarray): The corresponding function values.
+            X_new (float): The next query point.
+            index (int): The index of the next query point.
+        """
         plt.figure(figsize=(12,6))
         plt.plot(domain, self.call_function(domain), 'y:', label='True Function')
         plt.plot(domain, mean, 'k', lw=2, zorder=9, label='GP Mean')
@@ -85,6 +157,12 @@ class BayesianOptimization:
         # plt.show()
 
     def getDomain(self):
+        """
+        Returns the domain of the optimization problem.
+
+        Returns:
+            ndarray: The domain of the optimization problem.
+        """
         return self.domain
 
 if __name__ == "__main__":
