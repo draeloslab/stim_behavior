@@ -158,6 +158,7 @@ class AngleDict:
         plt.title('Heatmap of Index and Wrist Angle')
         plt.xlabel('Change in Index Angle')
         plt.ylabel('Change in Wrist Angle')
+        plt.savefig('heatmap.svg', format='svg')
         plt.show()
 
 if __name__ == "__main__":
@@ -172,9 +173,10 @@ if __name__ == "__main__":
     test.dictChecker(index, wrist)
     test.dictPlot()
 
-    realParams = realData(y_data=y_data, pulseWidth=pulseWidth)
-    realParams.electrodePlotMatt()
+    # realParams = realData(y_data=y_data, pulseWidth=pulseWidth)
+    # realParams.electrodePlotMatt()
   
+
 
 
 
