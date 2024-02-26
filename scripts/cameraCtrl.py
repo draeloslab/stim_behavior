@@ -171,8 +171,8 @@ def save_video(
             pass
 
         def sink_connected(self, sink: ic4.QueueSink, image_type: ic4.ImageType, min_buffers_required: int) -> bool:
-            sink.alloc_and_queue_buffers(5)
-            writer.begin_file("/tmp/test.mp4", image_type, fps.value)
+            sink.alloc_and_queue_buffers(6)
+            writer.begin_file("C:/Users/Jjmas/OneDrive/Desktop/Research/Anne/stim_behavior/test.mp4", image_type, fps.value)
             return True
 
         def sink_disconnected(self, sink: ic4.QueueSink):
