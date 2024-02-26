@@ -7,6 +7,7 @@ import os
 from enum import Enum
 from typing import Optional
 import sys
+import keyboard
 
 import textwrap
 import argparse
@@ -174,7 +175,7 @@ def save_video(
             sink.alloc_and_queue_buffers(6)
             writer.begin_file("C:/Users/Jjmas/OneDrive/Desktop/Research/Anne/stim_behavior/test.mp4", image_type, fps.value)
             return True
-
+        
         def sink_disconnected(self, sink: ic4.QueueSink):
             writer.finish_file()
 
@@ -191,7 +192,18 @@ def save_video(
 
     grabber.stream_setup(sink)
 
-    time.sleep(duration_s)
+
+    #Added functionality to stop recording earlier if necessary
+    start_time = time.time()
+    while time.time() - start_time < float(duration_s):
+        if keyboard.is_pressed('q'):  # If 'q' is pressed, stop recording
+            print("Stopping recording due to key press.")
+            break
+        time.sleep(0.1)  # Sleep briefly to reduce CPU usage
+
+    grabber.device_close()  # Ensure the device is properly closed
+
+    # time.sleep(duration_s)
 
 
 def save_image(
