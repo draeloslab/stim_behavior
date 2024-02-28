@@ -147,6 +147,44 @@ def set_properties(dev: ic4.DeviceInfo, new_props: list[str]):
         props.set_value(name, value)
         print(name, value)
 
+def save_image(
+    dev: ic4.DeviceInfo,
+    n_images: int,
+    store_dir: str = os.getcwd(),
+    file_name: str = "image-{C}",
+    file_type: ImageType = ImageType.BMP,
+):
+    """
+    Save video to file.
+
+    Args:
+        dev: Device that shall be opened
+        store_dir: Default: current working dir
+        file_name: Default: "video"
+        video_type: Default: bmp
+    """
+    grabber = ic4.Grabber()
+    grabber.device_open(dev)
+
+    sink = ic4.SnapSink()
+
+    grabber.stream_setup(sink)
+
+    def save(f: ic4.ImageBuffer, f_name: str):
+        # error via exception
+        if file_type == ImageType.BMP:
+            f.save_as_bmp(f"{store_dir}/{f_name}.{file_type}")
+        elif file_type == ImageType.JPEG:
+            f.save_as_jpeg(f"{store_dir}/{f_name}.{file_type}")
+        if file_type == ImageType.PNG:
+            f.save_as_png(f"{store_dir}/{f_name}.{file_type}")
+        if file_type == ImageType.TIFF:
+            f.save_as_tiff(f"{store_dir}/{f_name}.{file_type}")
+
+    images = sink.snap_sequence(n_images, 1000)
+    for n in range(0, n_images):
+        f_name = file_name.replace("{C}", str(n))
+        save(images[n], f_name)
 
 def save_video(
     dev: ic4.DeviceInfo, duration_s: int = 10, file_name: str = "video", video_type: VideoType = VideoType.H264
@@ -206,44 +244,7 @@ def save_video(
     # time.sleep(duration_s)
 
 
-def save_image(
-    dev: ic4.DeviceInfo,
-    n_images: int,
-    store_dir: str = os.getcwd(),
-    file_name: str = "image-{C}",
-    file_type: ImageType = ImageType.BMP,
-):
-    """
-    Save video to file.
 
-    Args:
-        dev: Device that shall be opened
-        store_dir: Default: current working dir
-        file_name: Default: "video"
-        video_type: Default: bmp
-    """
-    grabber = ic4.Grabber()
-    grabber.device_open(dev)
-
-    sink = ic4.SnapSink()
-
-    grabber.stream_setup(sink)
-
-    def save(f: ic4.ImageBuffer, f_name: str):
-        # error via exception
-        if file_type == ImageType.BMP:
-            f.save_as_bmp(f"{store_dir}/{f_name}.{file_type}")
-        elif file_type == ImageType.JPEG:
-            f.save_as_jpeg(f"{store_dir}/{f_name}.{file_type}")
-        if file_type == ImageType.PNG:
-            f.save_as_png(f"{store_dir}/{f_name}.{file_type}")
-        if file_type == ImageType.TIFF:
-            f.save_as_tiff(f"{store_dir}/{f_name}.{file_type}")
-
-    images = sink.snap_sequence(n_images, 1000)
-    for n in range(0, n_images):
-        f_name = file_name.replace("{C}", str(n))
-        save(images[n], f_name)
 
 def threaded_video_capture(dev: ic4.DeviceInfo, duration_s: int = 10, file_name: str = "video", video_type: VideoType = VideoType.H264):
     save_video(dev, duration_s, file_name, video_type)
@@ -351,6 +352,16 @@ def main() -> int:
     video.add_argument("--type", help="Video types", type=VideoType, choices=list(VideoType), default=VideoType.H264)
 
     video.add_argument("--serial", "-s", help="Serial of the camera", required=True)
+   
+    # args for simultaneous recording
+
+    simultaneous = subs.add_parser("sim", help="Start simultaneous recording of multiple devices")
+    simultaneous.add_argument(
+        "--time", "-t", help="Time period that shall be saved in seconds. Default=10s", default=10, action="store"
+    )
+    simultaneous.add_argument("--type", help="Video types", type=VideoType, choices=list(VideoType), default=VideoType.H264)
+    simultaneous.add_argument("--name", help="Filename of saved videos", default="video")
+
 
     # args for live stream
 
@@ -370,10 +381,11 @@ def main() -> int:
         list_devices()
         return 0
 
-    d = get_device(args.serial)
-    if not d:
-        print("Unable to find device with given serial!")
-        return 1
+    if args.command != "sim":
+        d = get_device(args.serial)
+        if not d:
+            print("Unable to find device with given serial!")
+            return 1
 
     if args.command == "properties":
         if args.json:
@@ -393,6 +405,10 @@ def main() -> int:
         save_video(d, args.time, args.name, args.type)
     elif args.command == "live":
         live_stream(d)
+    elif args.command == "sim":
+        print('Press "q" twice to stop recording.')
+        start_simultaenous_recording(args.time, args.type)
+        print("Recording finished.")
     else:
         arguments.print_help()
 
@@ -400,6 +416,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    # sys.exit(main())
-    ic4.Library.init()
-    start_simultaenous_recording(2, VideoType.H264)
+    sys.exit(main())
+    # ic4.Library.init()
+    # start_simultaenous_recording(2, VideoType.H264)
