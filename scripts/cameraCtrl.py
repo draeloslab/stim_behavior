@@ -168,12 +168,12 @@ def save_video(
     writer = ic4.VideoWriter(ic4.VideoWriterType.MP4_H264)
 
     class Listener(ic4.QueueSinkListener):
-        def __init__(self):
-            pass
+        def __init__(self, file_path):
+            self.file_path = file_path
 
         def sink_connected(self, sink: ic4.QueueSink, image_type: ic4.ImageType, min_buffers_required: int) -> bool:
             sink.alloc_and_queue_buffers(6)
-            writer.begin_file("C:/Users/Jjmas/OneDrive/Desktop/Research/Anne/stim_behavior/test.mp4", image_type, fps.value)
+            writer.begin_file(self.file_path, image_type, fps.value)
             return True
         
         def sink_disconnected(self, sink: ic4.QueueSink):
@@ -186,8 +186,8 @@ def save_video(
                     writer.add_frame(f)
                 except ic4.IC4Exception:
                     return
-
-    listen = Listener()
+    file_path = f"C:/Users/Jjmas/OneDrive/Desktop/Research/Anne/stim_behavior/{file_name}.mp4"
+    listen = Listener(file_path)
     sink = ic4.QueueSink(listen)
 
     grabber.stream_setup(sink)
@@ -402,4 +402,4 @@ def main() -> int:
 if __name__ == "__main__":
     # sys.exit(main())
     ic4.Library.init()
-    start_simultaenous_recording(10, VideoType.H264)
+    start_simultaenous_recording(2, VideoType.H264)
