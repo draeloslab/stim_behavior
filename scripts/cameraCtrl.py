@@ -249,14 +249,14 @@ def save_video(
 def threaded_video_capture(dev: ic4.DeviceInfo, duration_s: int = 10, file_name: str = "video", video_type: VideoType = VideoType.H264):
     save_video(dev, duration_s, file_name, video_type)
 
-def start_simultaenous_recording(duration_s: int = 10, video_type: VideoType = VideoType.H264):
+def start_simultaenous_recording(duration_s: int = 10, video_type: VideoType = VideoType.H264, file_name: str = "video"):
     devs = ic4.DeviceEnum()
     devices = devs.devices()
     threads = []
     for i, dev in enumerate(devices):
-        file_name = f"video_{i}"
-        print(f"Starting recording for {dev.model_name} ({dev.serial}) to {file_name}.")
-        t = threading.Thread(target=threaded_video_capture, args=(dev, duration_s, file_name, video_type))
+        name = f"{file_name}_{i}"
+        print(f"Starting recording for {dev.model_name} ({dev.serial}) to {name}.")
+        t = threading.Thread(target=threaded_video_capture, args=(dev, duration_s, name, video_type))
         threads.append(t)
     for t in threads:
         t.start()
@@ -407,7 +407,7 @@ def main() -> int:
         live_stream(d)
     elif args.command == "sim":
         print('Press "q" twice to stop recording.')
-        start_simultaenous_recording(args.time, args.type)
+        start_simultaenous_recording(args.time, args.type, args.name)
         print("Recording finished.")
     else:
         arguments.print_help()
