@@ -147,65 +147,6 @@ def set_properties(dev: ic4.DeviceInfo, new_props: list[str]):
         props.set_value(name, value)
         print(name, value)
 
-
-def save_video(
-    dev: ic4.DeviceInfo, duration_s: int = 10, file_name: str = "video", video_type: VideoType = VideoType.H264
-):
-    """
-    Save video to file.
-
-    Args:
-        dev: Device that shall be opened
-        duration_s: Default: 10
-        file_name: Default: "video"
-        video_type: Default: h264
-    """
-    grabber = ic4.Grabber()
-    grabber.device_open(dev)
-
-    fps = grabber.device_property_map.find_float("AcquisitionFrameRate")
-
-    writer = ic4.VideoWriter(ic4.VideoWriterType.MP4_H264)
-
-    class Listener(ic4.QueueSinkListener):
-        def __init__(self):
-            pass
-
-        def sink_connected(self, sink: ic4.QueueSink, image_type: ic4.ImageType, min_buffers_required: int) -> bool:
-            sink.alloc_and_queue_buffers(6)
-            writer.begin_file("C:/Users/Jjmas/OneDrive/Desktop/Research/Anne/stim_behavior/test.mp4", image_type, fps.value)
-            return True
-        
-        def sink_disconnected(self, sink: ic4.QueueSink):
-            writer.finish_file()
-
-        def frames_queued(self, sink: ic4.QueueSink):
-            while True:
-                try:
-                    f = sink.pop_output_buffer()
-                    writer.add_frame(f)
-                except ic4.IC4Exception:
-                    return
-
-    listen = Listener()
-    sink = ic4.QueueSink(listen)
-
-    grabber.stream_setup(sink)
-
-
-    #Added functionality to stop recording earlier if necessary
-    start_time = time.time()
-    while time.time() - start_time < float(duration_s):
-        if keyboard.is_pressed('q'):  # If 'q' is pressed, stop recording
-            print("Stopping recording due to key press.")
-            break
-        time.sleep(0.1)  # Sleep briefly to reduce CPU usage
-
-    grabber.device_close()  # Ensure the device is properly closed
-
-    # time.sleep(duration_s)
-
-
 def save_image(
     dev: ic4.DeviceInfo,
     n_images: int,
@@ -244,6 +185,84 @@ def save_image(
     for n in range(0, n_images):
         f_name = file_name.replace("{C}", str(n))
         save(images[n], f_name)
+
+def save_video(
+    dev: ic4.DeviceInfo, duration_s: int = 10, file_name: str = "video", video_type: VideoType = VideoType.H264
+):
+    """
+    Save video to file.
+
+    Args:
+        dev: Device that shall be opened
+        duration_s: Default: 10
+        file_name: Default: "video"
+        video_type: Default: h264
+    """
+    grabber = ic4.Grabber()
+    grabber.device_open(dev)
+
+    fps = grabber.device_property_map.find_float("AcquisitionFrameRate")
+
+    writer = ic4.VideoWriter(ic4.VideoWriterType.MP4_H264)
+
+    class Listener(ic4.QueueSinkListener):
+        def __init__(self, file_path):
+            self.file_path = file_path
+
+        def sink_connected(self, sink: ic4.QueueSink, image_type: ic4.ImageType, min_buffers_required: int) -> bool:
+            sink.alloc_and_queue_buffers(6)
+            writer.begin_file(self.file_path, image_type, fps.value)
+            return True
+        
+        def sink_disconnected(self, sink: ic4.QueueSink):
+            writer.finish_file()
+
+        def frames_queued(self, sink: ic4.QueueSink):
+            while True:
+                try:
+                    f = sink.pop_output_buffer()
+                    writer.add_frame(f)
+                except ic4.IC4Exception:
+                    return
+    file_path = f"C:/Users/Jjmas/OneDrive/Desktop/Research/Anne/stim_behavior/{file_name}.mp4"
+    listen = Listener(file_path)
+    sink = ic4.QueueSink(listen)
+
+    grabber.stream_setup(sink)
+
+
+    #Added functionality to stop recording earlier if necessary
+    start_time = time.time()
+    while time.time() - start_time < float(duration_s):
+        if keyboard.is_pressed('q'):  # If 'q' is pressed, stop recording
+            print("Stopping recording due to key press.")
+            break
+        time.sleep(0.1)  # Sleep briefly to reduce CPU usage
+
+    grabber.device_close()  # Ensure the device is properly closed
+
+    # time.sleep(duration_s)
+
+
+
+
+def threaded_video_capture(dev: ic4.DeviceInfo, duration_s: int = 10, file_name: str = "video", video_type: VideoType = VideoType.H264):
+    save_video(dev, duration_s, file_name, video_type)
+
+def start_simultaenous_recording(duration_s: int = 10, video_type: VideoType = VideoType.H264, file_name: str = "video"):
+    devs = ic4.DeviceEnum()
+    devices = devs.devices()
+    threads = []
+    for i, dev in enumerate(devices):
+        name = f"{file_name}_{i}"
+        print(f"Starting recording for {dev.model_name} ({dev.serial}) to {name}.")
+        t = threading.Thread(target=threaded_video_capture, args=(dev, duration_s, name, video_type))
+        threads.append(t)
+    for t in threads:
+        t.start()
+
+    for t in threads:
+        t.join()
 
 
 def get_device(serial: str) -> Optional[ic4.DeviceInfo]:
@@ -289,6 +308,62 @@ def live_stream(dev: ic4.DeviceInfo):
 
     display.event_remove_window_closed(cb_token)
 
+def example_imagebuffer_numpy_opencv_live():
+    class ProcessAndDisplayListener(ic4.QueueSinkListener):
+    # Listener to demonstrate processing and displaying received images
+
+        def __init__(self, d: ic4.Display):
+            self.display = d
+
+        def sink_connected(self, sink: ic4.QueueSink, image_type: ic4.ImageType, min_buffers_required: int) -> bool:
+            # Just accept whatever is passed
+            return True
+
+        def frames_queued(self, sink: ic4.QueueSink):
+            # Get the new buffer from the sink
+            buffer = sink.pop_output_buffer()
+            # Send the modified buffer to the display
+            self.display.display_buffer(buffer)
+    # Let the select a video capture device
+    device_list = ic4.DeviceEnum.devices()
+    for i, dev in enumerate(device_list):
+        print(f"[{i}] {dev.model_name} ({dev.serial}) [{dev.interface.display_name}]")
+    print(f"Select device [0..{len(device_list) - 1}]: ", end="")
+    selected_index = int(input())
+    dev_info = device_list[selected_index]
+
+    # Open the selected device in a new Grabber
+    grabber = ic4.Grabber()
+    grabber.device_open(dev_info)
+
+    # Create a floating display
+    display = ic4.FloatingDisplay()
+    display.set_render_position(ic4.DisplayRenderPosition.STRETCH_CENTER)
+
+    # Configure an window-closed event handler that sets a flag when the window is closed
+    exit_flag: bool = False
+
+    def window_closed_handler(d: ic4.Display):
+        nonlocal exit_flag
+        exit_flag = True
+
+    display.event_add_window_closed(window_closed_handler)
+
+    # Create a listener to process and display the received images
+    listener = ProcessAndDisplayListener(display)
+
+    # Create a sink that passes the images to the listener
+    # This sink fixes the pixel format to BGR8, so that the listener receives 3-channel color images
+    # max_output_buffers is set to 1 so that we always get the latest available image
+    sink = ic4.QueueSink(listener, [ic4.PixelFormat.BGR8], max_output_buffers=1)
+    grabber.stream_setup(sink)
+
+    # Wait for the window to be closed
+    while not exit_flag:
+        time.sleep(0.1)
+
+    grabber.stream_stop()
+
 
 def main() -> int:
     arguments = argparse.ArgumentParser()
@@ -333,29 +408,40 @@ def main() -> int:
     video.add_argument("--type", help="Video types", type=VideoType, choices=list(VideoType), default=VideoType.H264)
 
     video.add_argument("--serial", "-s", help="Serial of the camera", required=True)
+   
+    # args for simultaneous recording
+
+    simultaneous = subs.add_parser("sim", help="Start simultaneous recording of multiple devices")
+    simultaneous.add_argument(
+        "--time", "-t", help="Time period that shall be saved in seconds. Default=10s", default=10, action="store"
+    )
+    simultaneous.add_argument("--type", help="Video types", type=VideoType, choices=list(VideoType), default=VideoType.H264)
+    simultaneous.add_argument("--name", help="Filename of saved videos", default="video")
+
 
     # args for live stream
 
     stream = subs.add_parser("live", help="Display live stream.")
 
-    stream.add_argument("--serial", "-s", help="Serial of the camera", required=True)
+    stream.add_argument("--serial", "-s", help="Serial of the camera", required=False)
 
     args = arguments.parse_args()
 
     if len(sys.argv) < 2:
         arguments.print_help()
         return 1
-
+#test
     ic4.Library.init()
 
     if args.command == "list":
         list_devices()
         return 0
 
-    d = get_device(args.serial)
-    if not d:
-        print("Unable to find device with given serial!")
-        return 1
+    if args.command != "sim" and args.command != "live":
+        d = get_device(args.serial)
+        if not d:
+            print("Unable to find device with given serial!")
+            return 1
 
     if args.command == "properties":
         if args.json:
@@ -374,12 +460,21 @@ def main() -> int:
     elif args.command == "video":
         save_video(d, args.time, args.name, args.type)
     elif args.command == "live":
-        live_stream(d)
+        # live_stream(d)
+        example_imagebuffer_numpy_opencv_live()
+    elif args.command == "sim":
+        print('Press "q" twice to stop recording.')
+        start_simultaenous_recording(args.time, args.type, args.name)
+        print("Recording finished.")
     else:
         arguments.print_help()
 
     return 0
 
+    # ic4.Library.exit()
+
 
 if __name__ == "__main__":
     sys.exit(main())
+    # ic4.Library.init()
+    # start_simultaenous_recording(2, VideoType.H264)
