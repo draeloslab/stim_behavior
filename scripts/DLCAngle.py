@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 
 class DLCData:
     def __init__(self, path,fps=30):
@@ -29,16 +30,52 @@ class DLCData:
                 df.iloc[i, x] = df.iloc[i-1, x]
                 df.iloc[i, y] = df.iloc[i-1, y]
 
-    def process_data(self, threshold=0.9, window=30):
+
+
+    def fill_missing(Y, kind="linear"):
+        """Fills missing values independently along each dimension after the first."""
+
+        # Store initial shape.
+        initial_shape = Y.shape
+
+        # Flatten after first dim.
+        Y = Y.reshape((initial_shape[0], -1))
+
+        # Interpolate along each slice.
+        for i in range(Y.shape[-1]):
+            y = Y[:, i]
+
+            # Build interpolant.
+            x = np.flatnonzero(~np.isnan(y))
+            f = interp1d(x, y[x], kind=kind, fill_value=np.nan, bounds_error=False)
+
+            # Fill missing
+            xq = np.flatnonzero(np.isnan(y))
+            y[xq] = f(xq)
+            
+            # Fill leading or trailing NaNs with the nearest non-NaN values
+            mask = np.isnan(y)
+            y[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), y[~mask])
+
+            # Save slice
+            Y[:, i] = y
+
+        # Restore to initial shape.
+        Y = Y.reshape(initial_shape)
+
+        return Y
+
+    def process_data(self, threshold=0.1, window=30):
         #interpolate
-        for i in range(1,len(self.data.columns),3):
+        for i in range(3,len(self.data.columns),3):
             likelihood = i + 2  
             x_col = i  
             y_col = i + 1  
             self.interpolate(self.data, x_col, y_col, likelihood, threshold)
 
+    
         #moving average
-        for i in range(1, len(self.data.columns),3):
+        for i in range(3, len(self.data.columns),3):
             x = self.data.columns[i]
             y = self.data.columns[i+1]
             x_ma = self.data[x].rolling(window=window, min_periods=1).mean()
@@ -52,11 +89,11 @@ class DLCData:
         self.mcpAngle = []
         self.pipAngle = []
         for i in range(len(self.data)):  #save angle for each posture for all frames
-            forearm = (self.data.iloc[i][self.data.columns[13]], self.data.iloc[i][self.data.columns[14]])
-            wrist = (self.data.iloc[i][self.data.columns[10]], self.data.iloc[i][self.data.columns[11]])
-            mcp = (self.data.iloc[i][self.data.columns[7]], self.data.iloc[i][self.data.columns[8]])
-            pip = (self.data.iloc[i][self.data.columns[4]], self.data.iloc[i][self.data.columns[5]])
-            dip = (self.data.iloc[i][self.data.columns[1]], self.data.iloc[i][self.data.columns[2]])
+            forearm = (self.data.iloc[i][self.data.columns[15]], self.data.iloc[i][self.data.columns[16]])
+            wrist = (self.data.iloc[i][self.data.columns[12]], self.data.iloc[i][self.data.columns[13]])
+            mcp = (self.data.iloc[i][self.data.columns[9]], self.data.iloc[i][self.data.columns[10]])
+            pip = (self.data.iloc[i][self.data.columns[6]], self.data.iloc[i][self.data.columns[7]])
+            dip = (self.data.iloc[i][self.data.columns[3]], self.data.iloc[i][self.data.columns[4]])
             self.wristAngle.append(self.calculate_angle(forearm, wrist, mcp))
             self.mcpAngle.append(self.calculate_angle(wrist, mcp, pip))
             self.pipAngle.append(self.calculate_angle(mcp, pip, dip))
@@ -80,10 +117,10 @@ class DLCData:
         else:
             start = slice[0]
             end = slice[1]
-            plt.plot()
-            plt.plot(self.time[start:end], self.wristAngle[start:end])
-            plt.plot(self.time[start:end], self.mcpAngle[start:end])
-            plt.plot(self.time[start:end], self.pipAngle[start:end])
+            # plt.plot()
+            plt.plot( self.wristAngle[start:end])
+            plt.plot( self.mcpAngle[start:end])
+            plt.plot( self.pipAngle[start:end])
             plt.legend(['Wrist Angle', 'MCP Angle', 'PIP Angle'], fontsize=16)
             plt.xlabel('Frame', fontsize=18)
             plt.ylabel('Angle (degrees)', fontsize=18)
@@ -93,6 +130,6 @@ class DLCData:
 
 
 if __name__ == '__main__':
-    path = "/home/jakejoseph/Desktop/FES_V1-Joseph-2023-10-16/videos/MVI_0401DLC_resnet50_FES_V1Oct16shuffle1_38000.csv"
+    path = "/home/jakejoseph/Desktop/Joseph_Code/SLEAPV1/labels.v001.009_trim10.analysis.csv"
     data = DLCData(path)
     data.plot()
