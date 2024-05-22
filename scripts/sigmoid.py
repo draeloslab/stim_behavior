@@ -173,8 +173,8 @@ if __name__ == "__main__":
     test.dictChecker(index, wrist)
     test.dictPlot()
 
-    # realParams = realData(y_data=y_data, pulseWidth=pulseWidth)
-    # realParams.electrodePlotMatt()
+    realParams = realData(y_data=y_data, pulseWidth=pulseWidth)
+    realParams.electrodePlotMatt()
   
 
 
