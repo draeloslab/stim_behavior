@@ -102,7 +102,7 @@ def frame_to_time(frame, fps):
 
 if __name__ == "__main__":
     stim_array = np.load('notebooks/stim_array.npy')
-    index2 = np.load('notebooks/napierFatigueData.npy')
+    index2 = np.load('notebooks/NapierFatigueData.npy')
     on_frames = np.where(np.diff(stim_array.astype(int)) == 1)[0]
 
     plt.figure(figsize=(20,5))
