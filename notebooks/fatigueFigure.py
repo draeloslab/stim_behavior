@@ -58,7 +58,7 @@ def interpolate(df, x, y, likelihood, threshold):
 
 def loadData(threshold=0.5, window=5, span=5, method='linear'):
     #Load extracted x,y data
-    data = pd.read_csv("Z:/Student Folders/Jake_Joseph/MVI_0401DLC_resnet50_FES_V1Oct16shuffle1_38000.csv", skiprows=3, header=None)
+    data = pd.read_csv("/home/jakejoseph/Desktop/FES_V1-Joseph-2023-10-16/videos/MVI_0401DLC_resnet50_FES_V1Oct16shuffle1_38000.csv", skiprows=3, header=None)
 
     for i in range(1,len(data.columns),3):
         likelihood = i + 2  
@@ -101,19 +101,9 @@ def frame_to_time(frame, fps):
 
 
 if __name__ == "__main__":
-    data = loadData(threshold=0.5, window=5, span=5, method='exponential')
-    stim_array = np.load('notebooks\stim_array.npy')
+    stim_array = np.load('notebooks/stim_array.npy')
+    index2 = np.load('notebooks/napierFatigueData.npy')
     on_frames = np.where(np.diff(stim_array.astype(int)) == 1)[0]
-
-    index2 = []
-
-    for i in range(len(data)):  #save angle for each posture for all frames
-        forearm = (data.iloc[i][data.columns[13]], data.iloc[i][data.columns[14]])
-        wrist = (data.iloc[i][data.columns[10]], data.iloc[i][data.columns[11]])
-        mcp = (data.iloc[i][data.columns[7]], data.iloc[i][data.columns[8]])
-        pip = (data.iloc[i][data.columns[4]], data.iloc[i][data.columns[5]])
-        dip = (data.iloc[i][data.columns[1]], data.iloc[i][data.columns[2]])
-        index2.append(calculate_angle(wrist, pip, dip))
 
     plt.figure(figsize=(20,5))
     plt.plot(index2, label = "W-P-D Angle")
