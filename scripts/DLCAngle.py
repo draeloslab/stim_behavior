@@ -94,9 +94,9 @@ class DLCData:
             mcp = (self.data.iloc[i][self.data.columns[9]], self.data.iloc[i][self.data.columns[10]])
             pip = (self.data.iloc[i][self.data.columns[6]], self.data.iloc[i][self.data.columns[7]])
             dip = (self.data.iloc[i][self.data.columns[3]], self.data.iloc[i][self.data.columns[4]])
-            self.wristAngle.append(self.calculate_angle(forearm, wrist, mcp))
-            self.mcpAngle.append(self.calculate_angle(wrist, mcp, pip))
-            self.pipAngle.append(self.calculate_angle(mcp, pip, dip))
+            # self.wristAngle.append(self.calculate_angle(forearm, wrist, mcp))
+            self.mcpAngle.append(self.calculate_angle(wrist, pip, dip))
+            # self.pipAngle.append(self.calculate_angle(mcp, pip, dip))
 
     def calculate_time(self, fps, slice_interval=10):
         self.time =  np.arange(len(self.data)) / self.fps
@@ -117,11 +117,15 @@ class DLCData:
         else:
             start = slice[0]
             end = slice[1]
+            plt.figure(figsize=(20,5))
+            plt.plot(self.mcpAngle[start:end], label = "W-P-D Angle")
+            plt.legend()
+
             # plt.plot()
-            plt.plot( self.wristAngle[start:end])
+            # plt.plot( self.wristAngle[start:end])
             plt.plot( self.mcpAngle[start:end])
-            plt.plot( self.pipAngle[start:end])
-            plt.legend(['Wrist Angle', 'MCP Angle', 'PIP Angle'], fontsize=16)
+            # plt.plot( self.pipAngle[start:end])
+            # plt.legend(['Wrist Angle', 'MCP Angle', 'PIP Angle'], fontsize=16)
             plt.xlabel('Frame', fontsize=18)
             plt.ylabel('Angle (degrees)', fontsize=18)
             plt.title('Joint Angles', fontsize=20)
@@ -130,6 +134,6 @@ class DLCData:
 
 
 if __name__ == '__main__':
-    path = "/home/jakejoseph/Desktop/Joseph_Code/SLEAPV1/labels.v001.009_trim10.analysis.csv"
+    path = "/home/jakejoseph/Desktop/Joseph_Code/SLEAPV2/labels.v001.000_fatigue.analysis.csv"
     data = DLCData(path)
     data.plot()

@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.ndimage import uniform_filter1d
+from scipy.optimize import curve_fit
 
 
 def movingAverage(data, window, method='linear'):
@@ -58,7 +59,7 @@ def interpolate(df, x, y, likelihood, threshold):
 
 def loadData(threshold=0.5, window=5, span=5, method='linear'):
     #Load extracted x,y data
-    data = pd.read_csv("/home/jakejoseph/Desktop/FES_V1-Joseph-2023-10-16/videos/MVI_0401DLC_resnet50_FES_V1Oct16shuffle1_38000.csv", skiprows=3, header=None)
+    data = pd.read_csv("/home/jakejoseph/Desktop/Joseph_Code/FESFatigue-Jake-2024-05-31/videos/testFatigueDLC_resnet50_FESFatigueMay31shuffle1_2000.csv", skiprows=3, header=None)
 
     for i in range(1,len(data.columns),3):
         likelihood = i + 2  
@@ -83,15 +84,35 @@ def loadData(threshold=0.5, window=5, span=5, method='linear'):
 def stimPlot(ax, stim, index2, color, sliceLength=150, start=20):
     subset = index2[stim-start:stim+sliceLength] - index2[stim-start]
     subset = uniform_filter1d(subset, size=4)
+    # subset = np.diff(subset)
     for i, angle in enumerate(subset):
         if angle < 0:
             subset[i] = 0
-    subset = subset / 83.92148926983948  #Set to stim 5 max value 
+    # subset = subset / 83.92148926983948  #Set to stim 5 max value 
+    diff = np.diff(subset)
+    stimStart = np.argmax(diff) +3
+    stimEnd = np.argmin(diff) -3
+    mean = np.mean(subset[stimStart:stimEnd])
     ax.plot(subset, color=color)
+    ax.plot( (stimStart+stimEnd)/2, mean, 'ro',label=f"Mean: {mean:.2f}")
     ax.set_title(f"Stim at {frame_to_time(stim, 30)}")
+    ax.axvline(x=stimStart, color='r', linestyle='--', alpha=0.5)
+    ax.axvline(x=stimEnd, color='r', linestyle='--', alpha=0.5)
     ax.set_xlabel("Frame")
     ax.set_ylabel("Change in Angle (Percent)")
-    return subset
+    return mean
+
+def getMean(data,stim, sliceLength=150, start=20):
+    subset = data[stim-start:stim+sliceLength] - data[stim-start]
+    subset = uniform_filter1d(subset, size=4)
+    for i, angle in enumerate(subset):
+        if angle < 0:
+            subset[i] = 0
+    diff = np.diff(subset)
+    stimStart = np.argmax(diff) +3
+    stimEnd = np.argmin(diff) -3
+    mean = np.mean(subset[stimStart:stimEnd])
+    return mean
 
 def frame_to_time(frame, fps):
     seconds = frame // fps
@@ -101,8 +122,18 @@ def frame_to_time(frame, fps):
 
 
 if __name__ == "__main__":
-    stim_array = np.load('notebooks/stim_array.npy')
     index2 = np.load('notebooks/NapierFatigueData.npy')
+    if 'index2' not in locals():
+        data = loadData(threshold=0.5, window=5, span=5, method='exponential')
+        index2 = []
+        for i in range(len(data)):  #save angle for each posture for all frames
+            forearm = (data.iloc[i][data.columns[13]], data.iloc[i][data.columns[14]])
+            wrist = (data.iloc[i][data.columns[10]], data.iloc[i][data.columns[11]])
+            mcp = (data.iloc[i][data.columns[7]], data.iloc[i][data.columns[8]])
+            pip = (data.iloc[i][data.columns[4]], data.iloc[i][data.columns[5]])
+            dip = (data.iloc[i][data.columns[1]], data.iloc[i][data.columns[2]])
+            index2.append(calculate_angle(wrist, pip, dip))
+    stim_array = np.load('notebooks/stim_array.npy')
     on_frames = np.where(np.diff(stim_array.astype(int)) == 1)[0]
 
     plt.figure(figsize=(20,5))
@@ -116,7 +147,7 @@ if __name__ == "__main__":
     plt.xlabel("Frame")
     plt.ylabel("Angle (Degrees)")
     plt.title("Movement of Index Finger (Interpolated and Exponential Moving Average)")
-    plt.show()
+
 
     # Create subplots
     fig, axes = plt.subplots(2, 4, figsize=(10, 5), sharex=True, sharey=True)
@@ -124,11 +155,33 @@ if __name__ == "__main__":
     axes = axes.flatten()
 
     stimuli = [1, 2, 5, 10, 20, 30, 40, 50]
-    lengths = [150,150,150,160,130,130,120,120]
+    lengths = [150,125,150,160,130,130,120,120]
     starts = [30, 20, 35, 20, 30, 40, 30, 40]
+    means = []
 
     for i, (stim, length, start) in enumerate(zip(stimuli, lengths, starts)):
         stimPlot(axes[i], on_frames[stim], index2, 'black', length, start)
-
     plt.tight_layout()
+
+    for i in range(len(on_frames)):
+        mean = getMean(index2, on_frames[i])
+        means.append(mean)
+        print(f"Stimulus {i}: {mean:.2f}")
+   
+    means = [mean for mean in means if not np.isnan(mean)]
+    def exponential_decay(x, a, b, c):
+        return a * np.exp(-b * x) + c
+
+    popt, pcov = curve_fit(exponential_decay, range(len(means)), means)
+    a_opt, b_opt, c_opt = popt
+    fitted_curve = exponential_decay(range(len(means)), a_opt, b_opt, c_opt)
+
+    plt.figure()
+    plt.plot(means, 'ro', label='Means')
+    plt.plot(fitted_curve, label='Fitted Curve')
+    plt.xlabel("Stimulus Number")
+    plt.ylabel("Mean Change in Angle (Degrees)")
+    plt.legend()
+
+
     plt.show()
