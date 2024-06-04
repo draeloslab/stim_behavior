@@ -147,8 +147,8 @@ if __name__ == "__main__":
         locs.append( ((off-on)/2) + on)
  
     means = np.array(means)
-    means[15:18] = None
-    means[-1] = None
+    means[15:18] = np.nan
+    means[-1] = np.nan
     plt.figure(figsize=(20,5))
     plt.plot(index2, label = "W-P-D Angle")
     plt.scatter(locs, means,color= 'r')
@@ -193,23 +193,20 @@ if __name__ == "__main__":
    
     def exponential_decay(x, a, b, c):
         return a * np.exp(-b * x) + c
-    
     means  = np.array(means)
-    validIdx = ~np.isnan(means)
-    means = means[validIdx]
-    means = means/np.max(means)
-    popt, pcov = curve_fit(exponential_decay, range(len(means)), means, maxfev=10000)
-    a_opt, b_opt, c_opt = popt
-    fitted_curve = exponential_decay(range(len(means)), a_opt, b_opt, c_opt)
-    plt.figure()
-    plt.plot(means, 'ro', label='Means')
-    plt.plot(fitted_curve, label=f'{a_opt:.2f} * exp(-{b_opt:.2f} * x) + {c_opt:.2f}')
+    mask = ~np.isnan(means)
+    filtered_means = means[mask]
+    filtered_indices = np.arange(len(means))[mask]
+    # Perform curve fitting
+
+    popt, pcov = curve_fit(exponential_decay, filtered_indices, filtered_means, maxfev=10000)
+
+    # Plot the results
+    plt.figure(figsize=(10, 6))
+    plt.scatter(np.arange(len(means)), means,label='Original Data', color = 'r',)
+    plt.plot(filtered_indices, exponential_decay(filtered_indices, *popt), label=f'{popt[0]:.2f} * exp^(-{popt[1]:.2f} * x) + {popt[2]:.2f}')
     plt.xlabel("Stimulus Number")
     plt.ylabel("Mean Change in Angle (Percent)")
     plt.legend()
-
-
     plt.show()
 
-    print(frame_to_time(on_frames[15], 30))
-    print(frame_to_time(off_frames[18], 30))
