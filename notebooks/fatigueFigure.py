@@ -81,21 +81,21 @@ def loadData(threshold=0.5, window=5, span=5, method='linear'):
             data[y] = y_ma
     return data
 
-def stimPlot(ax, stim, index2, color, sliceLength=150, start=20):
+def stimPlot(stimNum,ax, stimArray, index2, color, sliceLength=150, start=20,norm=1):
+    stim = stimArray[stimNum]
     subset = index2[stim-start:stim+sliceLength] - index2[stim-start]
     subset = uniform_filter1d(subset, size=4)
-    # subset = np.diff(subset)
     for i, angle in enumerate(subset):
         if angle < 0:
             subset[i] = 0
-    # subset = subset / 83.92148926983948  #Set to stim 5 max value 
+    subset = subset / norm  #Set to stim 5 max value 
     diff = np.diff(subset)
-    stimStart = np.argmax(diff) +3
-    stimEnd = np.argmin(diff) -3
+    stimStart = np.argmax(diff) +8
+    stimEnd = np.argmin(diff) -8
     mean = np.mean(subset[stimStart:stimEnd])
     ax.plot(subset, color=color)
     ax.plot( (stimStart+stimEnd)/2, mean, 'ro',label=f"Mean: {mean:.2f}")
-    ax.set_title(f"Stim at {frame_to_time(stim, 30)}")
+    ax.set_title(f"Stim {stimNum}")
     ax.axvline(x=stimStart, color='r', linestyle='--', alpha=0.5)
     ax.axvline(x=stimEnd, color='r', linestyle='--', alpha=0.5)
     ax.set_xlabel("Frame")
@@ -109,8 +109,8 @@ def getMean(data,stim, sliceLength=150, start=20):
         if angle < 0:
             subset[i] = 0
     diff = np.diff(subset)
-    stimStart = np.argmax(diff) +3
-    stimEnd = np.argmin(diff) -3
+    stimStart = np.argmax(diff) +8
+    stimEnd = np.argmin(diff) -8
     mean = np.mean(subset[stimStart:stimEnd])
     return mean
 
@@ -135,13 +135,24 @@ if __name__ == "__main__":
             index2.append(calculate_angle(wrist, pip, dip))
     stim_array = np.load('notebooks/stim_array.npy')
     on_frames = np.where(np.diff(stim_array.astype(int)) == 1)[0]
+    off_frames = np.where(np.diff(stim_array.astype(int)) == -1)[0]
+
+    # Auto find stim means
+    # for stim in on_frames:
+    #     stimStart = np.argmax(np.diff(index2[stim-20:stim+20]))
+    #     stimEnd = np.argmin(np.diff(index2[stim:stim+1]))
+ 
 
     plt.figure(figsize=(20,5))
     plt.plot(index2, label = "W-P-D Angle")
+    # plt.plot(np.diff(index2)+100)
 
     # Plot vertical lines for on_frames
     for frame in on_frames:
-        plt.axvline(x=frame, color='r', linestyle='--', alpha=0.5)
+        plt.axvline(x=frame+8, color='r', linestyle='--', alpha=0.5)
+    
+    for frame in off_frames:
+        plt.axvline(x=frame-8, color='b', linestyle='--', alpha=0.5)
 
     plt.legend()
     plt.xlabel("Frame")
@@ -160,19 +171,26 @@ if __name__ == "__main__":
     means = []
 
     for i, (stim, length, start) in enumerate(zip(stimuli, lengths, starts)):
-        stimPlot(axes[i], on_frames[stim], index2, 'black', length, start)
+        means.append(getMean(index2, on_frames[stim], length, start))
+    norm = np.max(means)
+
+    for i, (stim, length, start) in enumerate(zip(stimuli, lengths, starts)):
+        stimPlot(stim,axes[i], on_frames, index2, 'black', length, start, norm)
     plt.tight_layout()
 
-    for i in range(len(on_frames)):
-        mean = getMean(index2, on_frames[i])
-        means.append(mean)
-        print(f"Stimulus {i}: {mean:.2f}")
+
+
+    # for i in range(len(on_frames)):
+    #     mean = getMean(index2, on_frames[i])
+    #     means.append(mean)
+    #     print(f"Stimulus {i}: {mean:.2f}")
    
-    means = [mean for mean in means if not np.isnan(mean)]
+    # means = [mean for mean in means if not np.isnan(mean)]
     def exponential_decay(x, a, b, c):
         return a * np.exp(-b * x) + c
-
-    popt, pcov = curve_fit(exponential_decay, range(len(means)), means)
+    
+    # means = means/norm
+    popt, pcov = curve_fit(exponential_decay, range(len(means)), means, maxfev=10000)
     a_opt, b_opt, c_opt = popt
     fitted_curve = exponential_decay(range(len(means)), a_opt, b_opt, c_opt)
 
