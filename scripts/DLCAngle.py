@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
 class DLCData:
-    def __init__(self, path,fps=30):
+    def __init__(self, path,fps=30,software='DLC'):
         self.data = pd.read_csv(path, skiprows=3, header=None)
         self.fps = fps
         self.length = len(self.data)
-        self.process_data()
+        self.process_data(software=software)
         self.calculate_time(self.fps)
         print("Extracted data from", path)
 
@@ -65,9 +65,15 @@ class DLCData:
 
         return Y
 
-    def process_data(self, threshold=0.1, window=30):
+    def process_data(self, threshold=0.1, window=30, software='DLC'):
+        if software == 'DLC':
+            pass
+        else:
+            self.data = self.data.iloc[:, 3:]
+            self.data.columns = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+
         #interpolate
-        for i in range(3,len(self.data.columns),3):
+        for i in range(1,len(self.data.columns),3):
             likelihood = i + 2  
             x_col = i  
             y_col = i + 1  
@@ -75,7 +81,7 @@ class DLCData:
 
     
         #moving average
-        for i in range(3, len(self.data.columns),3):
+        for i in range(1, len(self.data.columns),3):
             x = self.data.columns[i]
             y = self.data.columns[i+1]
             x_ma = self.data[x].rolling(window=window, min_periods=1).mean()
@@ -135,5 +141,6 @@ class DLCData:
 
 if __name__ == '__main__':
     path = "/home/jakejoseph/Desktop/Joseph_Code/SLEAPV2/labels.v001.000_fatigue.analysis.csv"
-    data = DLCData(path)
+    data = "/home/jakejoseph/Desktop/FES_V1-Joseph-2023-10-16/videos/MVI_0401DLC_resnet50_FES_V1Oct16shuffle1_38000.csv"
+    data = DLCData(path,software='DLC')
     data.plot()
