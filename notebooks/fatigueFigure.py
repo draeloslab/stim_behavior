@@ -137,22 +137,28 @@ if __name__ == "__main__":
     on_frames = np.where(np.diff(stim_array.astype(int)) == 1)[0]
     off_frames = np.where(np.diff(stim_array.astype(int)) == -1)[0]
 
-    # Auto find stim means
-    # for stim in on_frames:
-    #     stimStart = np.argmax(np.diff(index2[stim-20:stim+20]))
-    #     stimEnd = np.argmin(np.diff(index2[stim:stim+1]))
- 
 
+    means = []
+    locs =[]
+    for on, off in zip(on_frames, off_frames):
+        subset = index2[on:off] - index2[on-20]
+        means.append(np.median(subset))
+        # means.append(np.median(index2[on:off]))
+        locs.append( ((off-on)/2) + on)
+ 
+    means = np.array(means)
+    means[15:18] = None
+    means[-1] = None
     plt.figure(figsize=(20,5))
     plt.plot(index2, label = "W-P-D Angle")
-    # plt.plot(np.diff(index2)+100)
+    plt.scatter(locs, means,color= 'r')
 
-    # Plot vertical lines for on_frames
-    for frame in on_frames:
-        plt.axvline(x=frame+8, color='r', linestyle='--', alpha=0.5)
+    # # Plot vertical lines for on_frames
+    # for frame in on_frames:
+    #     plt.axvline(x=frame-20, color='r', linestyle='--', alpha=0.5)
     
-    for frame in off_frames:
-        plt.axvline(x=frame-8, color='b', linestyle='--', alpha=0.5)
+    # for frame in off_frames:
+    #     plt.axvline(x=frame-10, color='b', linestyle='--', alpha=0.5)
 
     plt.legend()
     plt.xlabel("Frame")
@@ -160,23 +166,23 @@ if __name__ == "__main__":
     plt.title("Movement of Index Finger (Interpolated and Exponential Moving Average)")
 
 
-    # Create subplots
-    fig, axes = plt.subplots(2, 4, figsize=(10, 5), sharex=True, sharey=True)
+    # # Create subplots
+    # fig, axes = plt.subplots(2, 4, figsize=(10, 5), sharex=True, sharey=True)
 
-    axes = axes.flatten()
+    # axes = axes.flatten()
 
-    stimuli = [1, 2, 5, 10, 20, 30, 40, 50]
-    lengths = [150,125,150,160,130,130,120,120]
-    starts = [30, 20, 35, 20, 30, 40, 30, 40]
-    means = []
+    # stimuli = [1, 2, 5, 10, 20, 30, 40, 50]
+    # lengths = [150,125,150,160,130,130,120,120]
+    # starts = [30, 20, 35, 20, 30, 40, 30, 40]
+    # means = []
 
-    for i, (stim, length, start) in enumerate(zip(stimuli, lengths, starts)):
-        means.append(getMean(index2, on_frames[stim], length, start))
-    norm = np.max(means)
+    # for i, (stim, length, start) in enumerate(zip(stimuli, lengths, starts)):
+    #     means.append(getMean(index2, on_frames[stim], length, start))
+    # norm = np.max(means)
 
-    for i, (stim, length, start) in enumerate(zip(stimuli, lengths, starts)):
-        stimPlot(stim,axes[i], on_frames, index2, 'black', length, start, norm)
-    plt.tight_layout()
+    # for i, (stim, length, start) in enumerate(zip(stimuli, lengths, starts)):
+    #     stimPlot(stim,axes[i], on_frames, index2, 'black', length, start, norm)
+    # plt.tight_layout()
 
 
 
@@ -185,21 +191,25 @@ if __name__ == "__main__":
     #     means.append(mean)
     #     print(f"Stimulus {i}: {mean:.2f}")
    
-    # means = [mean for mean in means if not np.isnan(mean)]
     def exponential_decay(x, a, b, c):
         return a * np.exp(-b * x) + c
     
-    # means = means/norm
+    means  = np.array(means)
+    validIdx = ~np.isnan(means)
+    means = means[validIdx]
+    means = means/np.max(means)
     popt, pcov = curve_fit(exponential_decay, range(len(means)), means, maxfev=10000)
     a_opt, b_opt, c_opt = popt
     fitted_curve = exponential_decay(range(len(means)), a_opt, b_opt, c_opt)
-
     plt.figure()
     plt.plot(means, 'ro', label='Means')
-    plt.plot(fitted_curve, label='Fitted Curve')
+    plt.plot(fitted_curve, label=f'{a_opt:.2f} * exp(-{b_opt:.2f} * x) + {c_opt:.2f}')
     plt.xlabel("Stimulus Number")
-    plt.ylabel("Mean Change in Angle (Degrees)")
+    plt.ylabel("Mean Change in Angle (Percent)")
     plt.legend()
 
 
     plt.show()
+
+    print(frame_to_time(on_frames[15], 30))
+    print(frame_to_time(off_frames[18], 30))
