@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
 class DLCData:
-    def __init__(self, path,fps=30,software='DLC'):
+    def __init__(self, path,fps=30):
         self.data = pd.read_csv(path, skiprows=3, header=None)
         self.fps = fps
         self.length = len(self.data)
-        self.process_data(software=software)
+        self.process_data()
         self.calculate_time(self.fps)
         print("Extracted data from", path)
 
@@ -65,15 +65,9 @@ class DLCData:
 
         return Y
 
-    def process_data(self, threshold=0.1, window=30, software='DLC'):
-        if software == 'DLC':
-            pass
-        else:
-            self.data = self.data.iloc[:, 3:]
-            self.data.columns = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
-
+    def process_data(self, threshold=0.1, window=1):
         #interpolate
-        for i in range(1,len(self.data.columns),3):
+        for i in range(3,len(self.data.columns),3):
             likelihood = i + 2  
             x_col = i  
             y_col = i + 1  
@@ -81,7 +75,7 @@ class DLCData:
 
     
         #moving average
-        for i in range(1, len(self.data.columns),3):
+        for i in range(3, len(self.data.columns),3):
             x = self.data.columns[i]
             y = self.data.columns[i+1]
             x_ma = self.data[x].rolling(window=window, min_periods=1).mean()
@@ -100,9 +94,9 @@ class DLCData:
             mcp = (self.data.iloc[i][self.data.columns[9]], self.data.iloc[i][self.data.columns[10]])
             pip = (self.data.iloc[i][self.data.columns[6]], self.data.iloc[i][self.data.columns[7]])
             dip = (self.data.iloc[i][self.data.columns[3]], self.data.iloc[i][self.data.columns[4]])
-            # self.wristAngle.append(self.calculate_angle(forearm, wrist, mcp))
-            self.mcpAngle.append(self.calculate_angle(wrist, pip, dip))
-            # self.pipAngle.append(self.calculate_angle(mcp, pip, dip))
+            self.wristAngle.append(self.calculate_angle(forearm, wrist, mcp))
+            self.mcpAngle.append(self.calculate_angle(wrist, mcp, pip))
+            self.pipAngle.append(self.calculate_angle(mcp, pip, dip))
 
     def calculate_time(self, fps, slice_interval=10):
         self.time =  np.arange(len(self.data)) / self.fps
@@ -112,6 +106,7 @@ class DLCData:
         self.ticks = self.time[slicing_indices]
 
     def plot(self, slice=None, frameBool=True):
+        
         if slice is None:
             slice = [0,self.length]
         print(slice[0])        
@@ -123,24 +118,26 @@ class DLCData:
         else:
             start = slice[0]
             end = slice[1]
-            plt.figure(figsize=(20,5))
-            plt.plot(self.mcpAngle[start:end], label = "W-P-D Angle")
-            plt.legend()
-
             # plt.plot()
-            # plt.plot( self.wristAngle[start:end])
-            plt.plot( self.mcpAngle[start:end])
+            plt.plot( self.wristAngle[start:end])
+            first = self.wristAngle[7350]-self.wristAngle[7250]
+            sec = self.wristAngle[22700]-self.wristAngle[22600]
+            print(first, sec)
+            print(sec-first)
+            plt.axvline(x=22700, color='r', linestyle='--')
+            plt.axvline(x=7350, color='r', linestyle='--')
+
+            # plt.plot( self.mcpAngle[start:end])
             # plt.plot( self.pipAngle[start:end])
             # plt.legend(['Wrist Angle', 'MCP Angle', 'PIP Angle'], fontsize=16)
             plt.xlabel('Frame', fontsize=18)
             plt.ylabel('Angle (degrees)', fontsize=18)
-            plt.title('Joint Angles', fontsize=20)
+            plt.title('Wrist Angle', fontsize=20)
             plt.tick_params(axis='both', labelsize=16)
             plt.show()
 
 
 if __name__ == '__main__':
-    path = "/home/jakejoseph/Desktop/Joseph_Code/SLEAPV2/labels.v001.000_fatigue.analysis.csv"
-    data = "/home/jakejoseph/Desktop/FES_V1-Joseph-2023-10-16/videos/MVI_0401DLC_resnet50_FES_V1Oct16shuffle1_38000.csv"
-    data = DLCData(path,software='DLC')
+    path = "/home/jakejoseph/Desktop/Joseph_Code/SLEAPV3/rhodesinterleavedfatigue.csv"
+    data = DLCData(path)
     data.plot()
