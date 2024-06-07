@@ -122,6 +122,7 @@ def frame_to_time(frame, fps):
 
 
 if __name__ == "__main__":
+    print(frame_to_time(6000,30))
     index2 = np.load('notebooks/NapierFatigueData.npy')
     if 'index2' not in locals():
         data = loadData(threshold=0.5, window=5, span=5, method='exponential')
