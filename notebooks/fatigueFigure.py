@@ -57,18 +57,23 @@ def interpolate(df, x, y, likelihood, threshold):
             df.iloc[i, x] = df.iloc[i-1, x]
             df.iloc[i, y] = df.iloc[i-1, y]
 
-def loadData(threshold=0.5, window=5, span=5, method='linear'):
+def loadData(threshold=0.9, window=10, span=5, method='linear'):
     #Load extracted x,y data
-    data = pd.read_csv("/home/jakejoseph/Desktop/Joseph_Code/FESFatigue-Jake-2024-05-31/videos/testFatigueDLC_resnet50_FESFatigueMay31shuffle1_2000.csv", skiprows=3, header=None)
+    data = pd.read_csv("/home/jakejoseph/Desktop/Joseph_Code/SLEAPV3/rhodesfatigue.csv", skiprows=3, header=None)
 
-    for i in range(1,len(data.columns),3):
+    # data = data.iloc[:, 3:]
+
+    # data.columns = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+
+
+    for i in range(3,len(data.columns),3):
         likelihood = i + 2  
         x_col = i  
         y_col = i + 1  
         interpolate(data, x_col, y_col, likelihood, threshold)
 
         #moving average
-    for i in range(1, len(data.columns),3):
+    for i in range(3, len(data.columns),3):
         x = data.columns[i]
         y = data.columns[i+1]
         if method == 'linear':
@@ -122,18 +127,17 @@ def frame_to_time(frame, fps):
 
 
 if __name__ == "__main__":
-    print(frame_to_time(6000,30))
-    index2 = np.load('notebooks/NapierFatigueData.npy')
+    # index2 = np.load('notebooks/NapierFatigueData.npy')
     if 'index2' not in locals():
         data = loadData(threshold=0.5, window=5, span=5, method='exponential')
         index2 = []
         for i in range(len(data)):  #save angle for each posture for all frames
-            forearm = (data.iloc[i][data.columns[13]], data.iloc[i][data.columns[14]])
-            wrist = (data.iloc[i][data.columns[10]], data.iloc[i][data.columns[11]])
-            mcp = (data.iloc[i][data.columns[7]], data.iloc[i][data.columns[8]])
-            pip = (data.iloc[i][data.columns[4]], data.iloc[i][data.columns[5]])
-            dip = (data.iloc[i][data.columns[1]], data.iloc[i][data.columns[2]])
-            index2.append(calculate_angle(wrist, pip, dip))
+            forearm = (data.iloc[i][data.columns[15]], data.iloc[i][data.columns[16]])
+            wrist = (data.iloc[i][data.columns[12]], data.iloc[i][data.columns[13]])
+            mcp = (data.iloc[i][data.columns[9]], data.iloc[i][data.columns[10]])
+            pip = (data.iloc[i][data.columns[6]], data.iloc[i][data.columns[7]])
+            dip = (data.iloc[i][data.columns[3]], data.iloc[i][data.columns[4]])
+            index2.append(calculate_angle(forearm, wrist, mcp))
     stim_array = np.load('notebooks/stim_array.npy')
     on_frames = np.where(np.diff(stim_array.astype(int)) == 1)[0]
     off_frames = np.where(np.diff(stim_array.astype(int)) == -1)[0]
@@ -151,8 +155,9 @@ if __name__ == "__main__":
     means[15:18] = np.nan
     means[-1] = np.nan
     plt.figure(figsize=(20,5))
-    plt.plot(index2, label = "W-P-D Angle")
-    plt.scatter(locs, means,color= 'r')
+    plt.plot(np.diff(index2)+150, label = "W-P-D Angle")
+    plt.plot(index2, label = "Wrist Angle")
+    # plt.scatter(locs, means,color= 'r')
 
     # # Plot vertical lines for on_frames
     # for frame in on_frames:
