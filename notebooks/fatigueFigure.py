@@ -173,29 +173,29 @@ if __name__ == "__main__":
 
 
     # # Create subplots
-    # fig, axes = plt.subplots(2, 4, figsize=(10, 5), sharex=True, sharey=True)
+    fig, axes = plt.subplots(2, 4, figsize=(10, 5), sharex=True, sharey=True)
 
-    # axes = axes.flatten()
+    axes = axes.flatten()
 
-    # stimuli = [1, 2, 5, 10, 20, 30, 40, 50]
-    # lengths = [150,125,150,160,130,130,120,120]
-    # starts = [30, 20, 35, 20, 30, 40, 30, 40]
-    # means = []
+    stimuli = [1, 2, 5, 10, 20, 30, 40, 50]
+    lengths = [150,125,150,160,130,130,120,120]
+    starts = [30, 20, 35, 20, 30, 40, 30, 40]
+    means = []
 
-    # for i, (stim, length, start) in enumerate(zip(stimuli, lengths, starts)):
-    #     means.append(getMean(index2, on_frames[stim], length, start))
-    # norm = np.max(means)
+    for i, (stim, length, start) in enumerate(zip(stimuli, lengths, starts)):
+        means.append(getMean(index2, on_frames[stim], length, start))
+    norm = np.max(means)
 
-    # for i, (stim, length, start) in enumerate(zip(stimuli, lengths, starts)):
-    #     stimPlot(stim,axes[i], on_frames, index2, 'black', length, start, norm)
-    # plt.tight_layout()
+    for i, (stim, length, start) in enumerate(zip(stimuli, lengths, starts)):
+        stimPlot(stim,axes[i], on_frames, index2, 'black', length, start, norm)
+    plt.tight_layout()
 
 
 
-    # for i in range(len(on_frames)):
-    #     mean = getMean(index2, on_frames[i])
-    #     means.append(mean)
-    #     print(f"Stimulus {i}: {mean:.2f}")
+    for i in range(len(on_frames)):
+        mean = getMean(index2, on_frames[i])
+        means.append(mean)
+        print(f"Stimulus {i}: {mean:.2f}")
    
     def exponential_decay(x, a, b, c):
         return a * np.exp(-b * x) + c
