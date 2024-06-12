@@ -7,11 +7,12 @@ import os
 from enum import Enum
 from typing import Optional
 import sys
-import keyboard
+# import keyboard
 
 import textwrap
 import argparse
 import imagingcontrol4 as ic4
+import cv2
 
 # constants for output formatting
 BOLD = "\033[1m"
@@ -310,59 +311,76 @@ def live_stream(dev: ic4.DeviceInfo):
 
 def example_imagebuffer_numpy_opencv_live():
     class ProcessAndDisplayListener(ic4.QueueSinkListener):
-    # Listener to demonstrate processing and displaying received images
-
-        def __init__(self, d: ic4.Display):
-            self.display = d
+        def __init__(self, display_name: str):
+            self.display_name = display_name
 
         def sink_connected(self, sink: ic4.QueueSink, image_type: ic4.ImageType, min_buffers_required: int) -> bool:
-            # Just accept whatever is passed
             return True
 
         def frames_queued(self, sink: ic4.QueueSink):
-            # Get the new buffer from the sink
             buffer = sink.pop_output_buffer()
-            # Send the modified buffer to the display
-            self.display.display_buffer(buffer)
-    # Let the select a video capture device
+            img = self.buffer_to_opencv_image(buffer)
+            cv2.imshow(self.display_name, img)  # Show image in the respective window
+            cv2.waitKey(1)
+
+        def buffer_to_opencv_image(self, buffer):
+            data = buffer.get_image_data()
+            height, width = buffer.get_image_size()
+            channels = buffer.get_image_channels()
+            if channels == 3:
+                img = data.reshape((height, width, channels))
+            else:
+                img = data.reshape((height, width))
+            return img
+
     device_list = ic4.DeviceEnum.devices()
-    for i, dev in enumerate(device_list):
-        print(f"[{i}] {dev.model_name} ({dev.serial}) [{dev.interface.display_name}]")
-    print(f"Select device [0..{len(device_list) - 1}]: ", end="")
-    selected_index = int(input())
-    dev_info = device_list[selected_index]
+    if not device_list:
+        print("No devices found.")
+        return
 
-    # Open the selected device in a new Grabber
-    grabber = ic4.Grabber()
-    grabber.device_open(dev_info)
+    grabbers = []
+    listeners = []
+    sinks = []
+    for i, dev_info in enumerate(device_list):
+        grabber = ic4.Grabber()
+        grabber.device_open(dev_info)
+        grabbers.append(grabber)
 
-    # Create a floating display
-    display = ic4.FloatingDisplay()
-    display.set_render_position(ic4.DisplayRenderPosition.STRETCH_CENTER)
+        display_name = f"Camera {i} - {dev_info.model_name} ({dev_info.serial})"
+        listener = ProcessAndDisplayListener(display_name)
+        listeners.append(listener)
 
-    # Configure an window-closed event handler that sets a flag when the window is closed
-    exit_flag: bool = False
+        sink = ic4.QueueSink(listener, [ic4.PixelFormat.BGR8], max_output_buffers=1)
+        sinks.append(sink)
+
+        grabber.stream_setup(sink)
+
+    exit_flag = False
 
     def window_closed_handler(d: ic4.Display):
         nonlocal exit_flag
         exit_flag = True
 
-    display.event_add_window_closed(window_closed_handler)
-
-    # Create a listener to process and display the received images
-    listener = ProcessAndDisplayListener(display)
-
-    # Create a sink that passes the images to the listener
-    # This sink fixes the pixel format to BGR8, so that the listener receives 3-channel color images
-    # max_output_buffers is set to 1 so that we always get the latest available image
-    sink = ic4.QueueSink(listener, [ic4.PixelFormat.BGR8], max_output_buffers=1)
-    grabber.stream_setup(sink)
+    # Add window close event for all displays
+    for i, listener in enumerate(listeners):
+        display = cv2.namedWindow(listener.display_name)
+        cv2.setWindowProperty(listener.display_name, cv2.WND_PROP_AUTOSIZE, cv2.WINDOW_AUTOSIZE)
 
     # Wait for the window to be closed
     while not exit_flag:
+        for listener in listeners:
+            if cv2.getWindowProperty(listener.display_name, cv2.WND_PROP_VISIBLE) < 1:
+                exit_flag = True
+                break
         time.sleep(0.1)
 
-    grabber.stream_stop()
+    for grabber in grabbers:
+        grabber.stream_stop()
+
+    for listener in listeners:
+        cv2.destroyWindow(listener.display_name)
+
+    cv2.destroyAllWindows()
 
 
 def main() -> int:
