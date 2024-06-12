@@ -7,7 +7,7 @@ import os
 from enum import Enum
 from typing import Optional
 import sys
-import keyboard
+# import keyboard
 
 import textwrap
 import argparse
@@ -319,9 +319,19 @@ def example_imagebuffer_numpy_opencv_live():
 
         def frames_queued(self, sink: ic4.QueueSink):
             buffer = sink.pop_output_buffer()
-            img = buffer.get_numpy_image()  # Convert to numpy array
+            img = self.buffer_to_opencv_image(buffer)
             cv2.imshow(self.display_name, img)  # Show image in the respective window
             cv2.waitKey(1)
+
+        def buffer_to_opencv_image(self, buffer):
+            data = buffer.get_image_data()
+            height, width = buffer.get_image_size()
+            channels = buffer.get_image_channels()
+            if channels == 3:
+                img = data.reshape((height, width, channels))
+            else:
+                img = data.reshape((height, width))
+            return img
 
     device_list = ic4.DeviceEnum.devices()
     if not device_list:
@@ -329,7 +339,6 @@ def example_imagebuffer_numpy_opencv_live():
         return
 
     grabbers = []
-    displays = []
     listeners = []
     sinks = []
     for i, dev_info in enumerate(device_list):
@@ -353,13 +362,14 @@ def example_imagebuffer_numpy_opencv_live():
         exit_flag = True
 
     # Add window close event for all displays
-    for i, display in enumerate(displays):
-        display.event_add_window_closed(window_closed_handler)
+    for i, listener in enumerate(listeners):
+        display = cv2.namedWindow(listener.display_name)
+        cv2.setWindowProperty(listener.display_name, cv2.WND_PROP_AUTOSIZE, cv2.WINDOW_AUTOSIZE)
 
     # Wait for the window to be closed
     while not exit_flag:
-        for i, display in enumerate(displays):
-            if cv2.getWindowProperty(display, cv2.WND_PROP_VISIBLE) < 1:
+        for listener in listeners:
+            if cv2.getWindowProperty(listener.display_name, cv2.WND_PROP_VISIBLE) < 1:
                 exit_flag = True
                 break
         time.sleep(0.1)
@@ -367,8 +377,8 @@ def example_imagebuffer_numpy_opencv_live():
     for grabber in grabbers:
         grabber.stream_stop()
 
-    for display in displays:
-        cv2.destroyWindow(display)
+    for listener in listeners:
+        cv2.destroyWindow(listener.display_name)
 
     cv2.destroyAllWindows()
 
