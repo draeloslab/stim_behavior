@@ -6,7 +6,9 @@ import matplotlib.patches as patches
 from scipy.signal import find_peaks
 from scipy.optimize import curve_fit
 import cv2
-from utils import calculate_angle
+import sys
+# sys.path.append('/home/jakejoseph/Desktop/Joseph_Code/stim_behavior/utils')
+from utils.utils import calculate_angle
 
 class DataLoader:
     """
@@ -76,7 +78,9 @@ class DataLoader:
                 forearm = (data.iloc[i][data.columns[13]], data.iloc[i][data.columns[14]])
                 wrist = (data.iloc[i][data.columns[10]], data.iloc[i][data.columns[11]])
                 mcp = (data.iloc[i][data.columns[7]], data.iloc[i][data.columns[8]])
-            else:
+                pip = (data.iloc[i][data.columns[4]], data.iloc[i][data.columns[5]])
+                dip = (data.iloc[i][data.columns[1]], data.iloc[i][data.columns[2]])
+            else:  # sleap indices # NOTE: Eventually need to make a converter function to handle this
                 forearm = (data.iloc[i][data.columns[15]], data.iloc[i][data.columns[16]])
                 wrist = (data.iloc[i][data.columns[12]], data.iloc[i][data.columns[13]])
                 mcp = (data.iloc[i][data.columns[9]], data.iloc[i][data.columns[10]])
@@ -99,7 +103,7 @@ class FatigueAnalysis(DataLoader):
         name (str): The name of the analysis.
         file (str): The file path of the data file.
         threshold (float): The threshold value for peak detection.
-        window (int): The window size for peak detection.
+        window (int): The window size for moving average.
         type (str, optional): The type of data. Defaults to 'DLC'.
         peakWindow (int, optional): The window size for peak analysis. Defaults to 20.
         height (int, optional): The height threshold for peak detection. Defaults to 130.
@@ -154,7 +158,7 @@ class FatigueAnalysis(DataLoader):
             lengths (list): List of stimulus lengths.
             starts (list): List of start frames for each stimulus.
         """
-        fig, axes = plt.subplots(1, length(stimuli), figsize=(20, 5), sharex=True, sharey=True)
+        fig, axes = plt.subplots(1, len(stimuli), figsize=(20, 5), sharex=True, sharey=True)
         axes = axes.flatten()
 
         def plotSingleStim(stimNum, ax, length, start):
@@ -178,10 +182,10 @@ class FatigueAnalysis(DataLoader):
             plotSingleStim(stim, axes[i], length, start)
             axes[i].set_ylim(110, 200)
             axes[i].axhline(y=180, color='red', linestyle='--')
-            plt.suptitle('Napier')
-            plt.ylabel('Absolute Angle (degrees)')
-            plt.tight_layout()
-            plt.show()
+            plt.suptitle(self.name)
+        plt.ylabel('Absolute Angle (degrees)')
+        plt.tight_layout()
+        plt.show()
 
     def fitExponentialDecay(self, guess, removeStartSlice=0):
         """
@@ -279,15 +283,14 @@ def plotDecay(data1, data2):
         data1 (object): Data object for Monkey R.
         data2 (object): Data object for Monkey N.
     """
-
     plt.figure(figsize=(8, 6))
     plt.scatter(data1.filtered_indices, data1.filtered_means, label=data1.name, color='#662506', s=20)
 
     # Slicing this plot since we didn't include the first 6 values in the fit
     plt.plot(data1.filtered_indices[6:], data1.exponential, label=r'Exponential: $\mathregular{%.0f \cdot e^{-%.2f x} + %.0f}$' % (data1.popt[0], data1.popt[1], round(data1.popt[2],-1)), color='#662506', linestyle='--')
 
-    plt.scatter(data2.filtered_indices, data2.angleChanges, label=data2.name, color='#3182bd', s=20)
-    plt.plot(data2.exponential, label=r'Exponential: $\mathregular{%d \cdot e^{-%.2f x} + %.0f}$' % (round(data2.popt[0]), data2.pop[1], round(data2.popt[2],-1)), color='#3182bd', linestyle='--')
+    plt.scatter(data2.filtered_indices, data2.filtered_means, label=data2.name, color='#3182bd', s=20)
+    plt.plot(data2.exponential, label=r'Exponential: $\mathregular{%d \cdot e^{-%.2f x} + %.0f}$' % (round(data2.popt[0]), data2.popt[1], round(data2.popt[2],-1)), color='#3182bd', linestyle='--')
 
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)

@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import cv2
 from scipy.ndimage import gaussian_filter1d
-from skimage import transform
-import h5py
+# from skimage import transform
+# import h5py
 from scipy import ndimage
 import os
 import random
