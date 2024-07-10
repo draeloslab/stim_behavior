@@ -26,13 +26,15 @@ class DataLoader:
         y (list): The y coordinates of the points.
     """
 
-    def __init__(self, name, file, threshold, window, type='DLC'):
+    def __init__(self, name, file, threshold, window, type='DLC', fps=30):
         self.file = file
         self.name = name
         self.threshold = threshold
         self.window = window
         self.type = type
+        self.fps=fps
         self.wrist, self.index = self.loadData()
+        print("Extracted data from", file)
 
     def loadData(self):
         """
@@ -43,6 +45,7 @@ class DataLoader:
             tuple: A tuple containing the wrist angles and index angles as numpy arrays.
         """
         data = pd.read_csv(self.file, skiprows=3, header=None)
+        self.length = len(data)
 
         def interpolate(df, x, y, likelihood, threshold):
             for i in range(1, len(df)):
@@ -93,6 +96,28 @@ class DataLoader:
             indexAngle.append(calculate_angle(wrist, mcp, pip))  # NOTE: This is using PIP as a vertex, some might use DIP
         return np.array(wristAngle), np.array(indexAngle)
 
+
+    def plot(self, slice=None):
+            """
+            Plots the wrist angle and index angle.
+
+            Args:
+                slice (tuple or int, optional): If `slice` is a tuple of start and end frame numbers, it specifies the range of frames to plot.
+                    If `slice` is an integer in the mm::ss format, it specifies the time duration to plot.
+                    Defaults to None.
+            """
+            if slice is None:
+                slice = [0, self.length]
+            else:
+                start = slice[0]
+                end = slice[1]
+            plt.plot(self.wrist[start:end])
+            plt.plot(self.index[start:end])
+            plt.legend(['Wrist Angle', 'Index Angle'], fontsize=16)
+            plt.xlabel('Frame', fontsize=18)
+            plt.ylabel('Angle (degrees)', fontsize=18)
+            plt.title('Wrist Angle', fontsize=20)
+            plt.show()
 
 class FatigueAnalysis(DataLoader):
     """
