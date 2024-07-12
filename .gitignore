@@ -1,4 +1,2 @@
 __pycache__
-data/
-outputs/
-playground.ipynb
+logs/

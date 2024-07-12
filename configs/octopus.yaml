@@ -1,0 +1,10 @@
+path:  
+  video: /home/sachinks/Data/raw/octopus/videos
+  
+  metadata: /home/sachinks/Data/raw/octopus/metadata.json
+  
+  processed: /home/sachinks/Data/processed/octopus
+  
+  output: /home/sachinks/Data/processed/octopus
+
+  model: /home/sachinks/Data/processed/octopus/models/DLC_Tent6_mobilenet_v2_0.35_iteration-0_shuffle-1
