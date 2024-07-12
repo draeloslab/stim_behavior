@@ -1,8 +1,0 @@
-path:
-  base_url: https://labshare.cshl.edu/shares/library/repository/38599/2pData/Animals/
-  
-  pattern_url: https://labshare\.cshl\.edu/shares/library/repository/38599/2pData/Animals/.*/SpatialDisc/.*/BehaviorVideo/SVD_Cam.*-Seg.*\.mat
-  
-  file_list: /home/sachinks/Data/processed/mouse-cshl/svd_cam_seg.csv
-  
-  output: /home/sachinks/Data/raw/mouse-cshl

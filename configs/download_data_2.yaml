@@ -1,8 +1,0 @@
-path:
-  base_url: https://labshare.cshl.edu/shares/library/repository/38599/2pData/Animals/
-  
-  pattern_url: https://labshare\.cshl\.edu/shares/library/repository/38599/2pData/Animals/.*/SpatialDisc/\d{1,2}-[A-Z][a-z]{2}-\d{4}\/
-  
-  file_list: /home/sachinks/Data/processed/mouse-cshl/file_paths.csv
-  
-  output: /home/sachinks/Data/raw/mouse-cshl
