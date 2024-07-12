@@ -7,8 +7,102 @@ from scipy.signal import find_peaks
 from scipy.optimize import curve_fit
 import cv2
 import sys
+import deeplabcut
 # sys.path.append('/home/jakejoseph/Desktop/Joseph_Code/stim_behavior/utils')
 from utils.utils import calculate_angle
+
+class DLCInterface():
+    """
+    A class that provides an interface for working with DeepLabCut.
+
+    Args:
+        config (str, optional): The path to the DeepLabCut project configuration file. Defaults to None.
+        name (str, optional): The name of the project. Defaults to None.
+        author (str, optional): The author of the project. Defaults to None.
+        video (str, optional): The path to the video used for the project. Defaults to None.
+        working_directory (str, optional): The working directory for the project. Defaults to None.
+        maxiters (int, optional): The maximum number of iterations for training. Defaults to 30000.
+    """
+
+    def __init__(self, config=None, name=None, author=None, video=None, working_directory=None, maxiters=30000):
+        if config is None:
+            self.config = deeplabcut.create_new_project(
+                name,
+                author,
+                video,
+                working_directory
+            )
+            deeplabcut.label_frames(self.config)
+            deeplabcut.create_training_dataset(self.config, augmenter_type='imgaug')
+            deeplabcut.train_network(self.config, shuffle=1, displayiters=100, saveiters=1000, maxiters=maxiters)
+
+        self.config = config
+
+    def analyze(self, path, video=False):
+        """
+        Analyzes the videos specified by the given path using DeepLabCut.
+
+        Args:
+            path (str or list): The path to the video(s) to be analyzed. It can be a single video name or a list of video names.
+            video (bool, optional): Whether to create labeled videos. Defaults to False.
+
+        Returns:
+            None
+        """
+        deeplabcut.analyze_videos(self.config, path, shuffle=1, save_as_csv=True, videotype='mp4')
+        if video:
+            deeplabcut.create_labeled_video(self.config, path, videotype='mp4')
+
+    def refine(self, maxiters=30000):
+        """
+        Refines the labels and trains the DeepLabCut network.
+
+        Args:
+            maxiters (int, optional): The maximum number of iterations for training. Defaults to 30000.
+
+        Returns:
+            None
+        """
+        deeplabcut.refine_labels(self.config)
+        deeplabcut.merge_datasets(self.config)
+        deeplabcut.create_training_dataset(self.config, net_type='resnet_50', augmenter_type='imgaug')
+        # TODO: add automated version to change initial weights of the pose_cfg.yaml file to the latest iteration and to auto set max_input_size to 2000 otherwise training won't start
+        deeplabcut.train_network(self.config, shuffle=1, displayiters=100, saveiters=1000, maxiters=maxiters)
+
+    def benchmark(self, video, model=None):
+        """
+        Perform benchmarking on a video using a DeepLabCut model.
+
+        Args:
+            video (str): Path to the video file.
+            model (str, optional): Path to the DeepLabCut model. If not provided, a new model will be exported using the
+                configuration file specified in `self.config`.
+
+        Returns:
+            None
+        """
+        if model is None:
+            model = deeplabcut.export_model(cfg_path=self.config, snapshotindex=-1, TFGPUinference=True, make_tar=False)
+        dlclive.benchmark_videos(model, video, resize=0.5, pcutoff=0.5)
+    
+    def plotInferenceTime(self, filepath):
+        """
+        Plot the inference time of a DeepLabCut model.
+
+        Args:
+            filepath (str): The path to the pickle file containing the inference time data.
+
+        Returns:
+            None
+        """
+        df = pd.read_pickle(filepath)
+        plt.plot(1/df['inference_times'][0])
+        plt.xlabel('Frame')
+        plt.ylabel('Frames Per Second')
+        plt.title('Inference Time)')
+        plt.show()
+
+
 
 class DataLoader:
     """
@@ -117,6 +211,16 @@ class DataLoader:
             plt.ylabel('Angle (degrees)', fontsize=18)
             plt.title('Wrist Angle', fontsize=20)
             plt.show()
+
+    def plot2DScatter(self):
+        colour = np.arange(len(self.wrist)) / 30
+        plt.scatter(self.wrist,self.index, c = colour, cmap = 'viridis',s=20)
+        plt.colorbar(label = 'Time (s)')
+        plt.xlabel("Wrist Angle (degrees)", fontsize=20)
+        plt.ylabel("Index Angle (degrees)", fontsize=20)
+        plt.title("Wrist vs Index Angle", fontsize=20)
+        plt.tick_params(axis='both', labelsize=16)
+        plt.show()
 
 class FatigueAnalysis(DataLoader):
     """

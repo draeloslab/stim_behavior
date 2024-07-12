@@ -1,13 +1,26 @@
-import argparse
-import cv2
-import imagingcontrol4 as ic4
-import numpy as np
+# NOTE: Current version used in the Chestek Lab rig, being rewritten under camera.py. Will be removed once camera.py is fully validated and tested
+#!/usr/bin/env python3
+
+# import filepath
+import time
+import threading
 import os
 import sys
 import threading
 import time
 from enum import Enum
 from typing import Optional
+import sys
+import keyboard
+
+import textwrap
+import argparse
+import imagingcontrol4 as ic4
+
+# constants for output formatting
+BOLD = "\033[1m"
+END = "\033[0m"
+
 
 class ImageType(Enum):
     BMP = "bmp"
@@ -134,57 +147,91 @@ def get_device(serial: str) -> Optional[ic4.DeviceInfo]:
             return d
     return None
 
-def live_stream():
+
+def live_stream(dev: ic4.DeviceInfo):
+    """
+    Start a live stream.
+
+    This will open a display window.
+    """
+    grabber = ic4.Grabber()
+    grabber.device_open(dev)
+
+    grabber.device_property_map.set_value(ic4.PropId.TRIGGER_MODE, "Off")
+
+    display = ic4.FloatingDisplay()
+
+    grabber.stream_setup(None, display)
+
+    e = threading.Event()
+
+    def window_closed(disp: ic4.Display):
+        print("window closed called")
+        e.set()
+
+    cb_token = display.event_register_window_closed(window_closed)
+    try:
+        e.wait(timeout=None)
+    except KeyboardInterrupt:
+        pass
+
+    display.event_remove_window_closed(cb_token)
+
+def example_imagebuffer_numpy_opencv_live():
+    class ProcessAndDisplayListener(ic4.QueueSinkListener):
+    # Listener to demonstrate processing and displaying received images
+
+        def __init__(self, d: ic4.Display):
+            self.display = d
+
+        def sink_connected(self, sink: ic4.QueueSink, image_type: ic4.ImageType, min_buffers_required: int) -> bool:
+            # Just accept whatever is passed
+            return True
+
+        def frames_queued(self, sink: ic4.QueueSink):
+            # Get the new buffer from the sink
+            buffer = sink.pop_output_buffer()
+            # Send the modified buffer to the display
+            self.display.display_buffer(buffer)
+    # Let the select a video capture device
     device_list = ic4.DeviceEnum.devices()
-    if not device_list:
-        print("No devices found.")
-        return
+    for i, dev in enumerate(device_list):
+        print(f"[{i}] {dev.model_name} ({dev.serial}) [{dev.interface.display_name}]")
+    print(f"Select device [0..{len(device_list) - 1}]: ", end="")
+    selected_index = int(input())
+    dev_info = device_list[selected_index]
 
-    grabbers = []
-    sinks = []
-    displays = []
-    frame_arrays = [[] for _ in device_list]
+    # Open the selected device in a new Grabber
+    grabber = ic4.Grabber()
+    grabber.device_open(dev_info)
 
-    def process_frame(buffer, index):
-        data = buffer.get_image_data()
-        height, width = buffer.get_image_size()
-        channels = buffer.get_image_channels()
-        if channels == 3:
-            img = data.reshape((height, width, channels))
-        else:
-            img = data.reshape((height, width))
-        frame_arrays[index].append(img)
-        return img
+    # Create a floating display
+    display = ic4.FloatingDisplay()
+    display.set_render_position(ic4.DisplayRenderPosition.STRETCH_CENTER)
 
-    def frames_queued(sink: ic4.QueueSink, index):
-        buffer = sink.pop_output_buffer()
-        img = process_frame(buffer, index)
-        cv2.imshow(f"Camera {index}", img)
+    # Configure an window-closed event handler that sets a flag when the window is closed
+    exit_flag: bool = False
 
-    for i, dev_info in enumerate(device_list):
-        grabber = ic4.Grabber()
-        grabber.device_open(dev_info)
-        grabbers.append(grabber)
+    def window_closed_handler(d: ic4.Display):
+        nonlocal exit_flag
+        exit_flag = True
 
-        listen = ic4.QueueSinkListener()
-        listen.frames_queued = lambda sink, idx=i: frames_queued(sink, idx)
-        sink = ic4.QueueSink(listen, [ic4.PixelFormat.BGR8], max_output_buffers=1)
-        sinks.append(sink)
+    display.event_add_window_closed(window_closed_handler)
 
-        grabber.stream_setup(sink)
+    # Create a listener to process and display the received images
+    listener = ProcessAndDisplayListener(display)
 
-        display = cv2.namedWindow(f"Camera {i}")
-        displays.append(display)
+    # Create a sink that passes the images to the listener
+    # This sink fixes the pixel format to BGR8, so that the listener receives 3-channel color images
+    # max_output_buffers is set to 1 so that we always get the latest available image
+    sink = ic4.QueueSink(listener, [ic4.PixelFormat.BGR8], max_output_buffers=1)
+    grabber.stream_setup(sink)
 
-    print('Press "q" to stop the live stream.')
-    while True:
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    # Wait for the window to be closed
+    while not exit_flag:
+        time.sleep(0.1)
 
-    for grabber in grabbers:
-        grabber.stream_stop()
-
-    cv2.destroyAllWindows()
+    grabber.stream_stop()
 
     return frame_arrays
 
