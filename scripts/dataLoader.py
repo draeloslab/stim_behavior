@@ -108,9 +108,8 @@ class DataLoader:
             """
             if slice is None:
                 slice = [0, self.length]
-            else:
-                start = slice[0]
-                end = slice[1]
+            start = slice[0]
+            end = slice[1]
             plt.plot(self.wrist[start:end])
             plt.plot(self.index[start:end])
             plt.legend(['Wrist Angle', 'Index Angle'], fontsize=16)
