@@ -13,7 +13,7 @@ def create_parser():
 
 def main(args):
     sys.path.append(args.project_root)
-    from models.mice_data_loader import MiceDataLoader
+    from stim_behavior.mice_data_loader import MiceDataLoader
     input_dir = args.input_dir
     output_dir = args.output_dir
 

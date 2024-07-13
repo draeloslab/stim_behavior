@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from data_manager import DataManager
+from .data_manager import DataManager
 from proSVD import proSVD
 from stim_behavior.utils.utils import rgb_to_grayscale, stream_video, shrink_image
 from stim_behavior.utils.logger import Logger
@@ -26,11 +26,10 @@ class ProSVDManager():
         self.stop_at = stop_at
         self.logger = Logger(log_level=log_level)
 
-
     def process_video(self, video_path):
         """
         @params
-            video_path (string, required): path to the video directory
+            video_path (string, required): path to the video file
         """
         generator = stream_video(video_path, self.logger)
 
@@ -69,7 +68,6 @@ class ProSVDManager():
             pro.updateSVD(frame[:, None])
             pro.postupdate()
 
-            # dm.add('Q', pro.Q)
             Q_curr = pro.Q
             loadings = pro.Q.T@frame
             dm.add('ld', loadings)
@@ -85,7 +83,6 @@ class ProSVDManager():
             dm.add('dQ', dQ)
 
         dm.to_numpy()
-        # Q_full = dm.get('Q')
         ld = dm.get('ld')
         dQ = dm.get('dQ')
         del dm
@@ -112,12 +109,15 @@ class ProSVDManager():
             np.save(f"{output_dir}/{key}.npy", val)
         self.logger.info(f"prosvd outputs saved successfully at {output_dir}")
 
-if __name__ == "__main__":
-    video_path = "/home/sachinks/Data/raw/octopus/sample_videos/slight_proximal_touch_220616_122638_000-1.mp4"
-    output_dir = "/home/sachinks/Data/tmp"
+def main(video_path, output_dir):
     dim_k = 4
     stop_at = 150
 
-    prosvdmanager = ProSVDManager(dim_k = dim_k, stop_at = 150)
+    prosvdmanager = ProSVDManager(dim_k = dim_k, stop_at = stop_at)
     data, metadata = prosvdmanager.process_video(video_path = video_path)
     prosvdmanager.save_result(data, output_dir=output_dir)
+
+if __name__ == "__main__":
+    video_path = "/home/sachinks/Data/raw/octopus/sample_videos/slight_proximal_touch_220616_122638_000-1.mp4"
+    output_dir = "/home/sachinks/Data/tmp"
+    main(video_path, output_dir)

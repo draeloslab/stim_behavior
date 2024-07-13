@@ -34,7 +34,7 @@ def shrink_image(image, target_size):
 def stream_video(video_path, logger):
     video = cv2.VideoCapture(video_path)
     if not video.isOpened():
-        logger.error("File not found:", video_path)
+        logger.error(f"File not found: {video_path}")
         raise FileNotFoundError(video_path)
     
     if logger.is_log_level("INFO"):

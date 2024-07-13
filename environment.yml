@@ -14,6 +14,7 @@ dependencies:
   - seaborn
   - pyyaml
   - scikit-image
+  - openpyxl
   - pip:
     - deeplabcut-live
     - prosvd
