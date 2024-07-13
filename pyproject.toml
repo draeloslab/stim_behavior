@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stim_behavior"
+version = "0.0.1"
+description = ""
+authors = [{name = "Sachin Salim", email = "sachinks@umich.edu"},
+           {name = "Jake Joseph", email = "jakejos@umich.edu"}]
+readme = "README.md"
+requires-python = ">=3.7"
+keywords = ["neuroscience", "pose estimation", "dimenstion reduction"]
+dependencies = []
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "." # so we can import from the scripts in the tests; you should still install stim_behavior as a package
+]
+
+[tool.setuptools]
+packages = ["stim_behavior"]
+
+[tool.coverage.run]
+include = [
+    "utils/**/*.py",
+    "scripts/**/*.py",
+    ]
+
+[tool.coverage.html]
+directory = "./tests/reports/coverage-html"
+
+[tool.coverage.xml]
+output = "./tests/reports/coverage.xml"
