@@ -36,20 +36,13 @@ def stream_video(video_path):
         yield frame
 
 def load_random_file(directory, seed=0):
-    # Set the seed for reproducibility
     random.seed(seed)
-
-    # Get a list of files in the directory
     files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
     if not files:
         print("No files found in the specified directory.")
         return None
-
-    # Choose a random file from the list
     random_file = random.choice(files)
-
-    # Return the randomly selected file path
     return os.path.join(directory, random_file)
 
 def delete_files(file_list):
