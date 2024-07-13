@@ -22,17 +22,37 @@ def stream_numpy_array(numpy_array, batch_size=1):
     for i in range(0, len(numpy_array), batch_size):
         yield numpy_array[i:i + batch_size]
 
+def shrink_image(image, target_size):
+    frame_shape = image.shape
+    frame_size = frame_shape[0]*frame_shape[1]
+    shrink_factor = np.sqrt(frame_size/target_size)
+    if shrink_factor <= 1.0:
+        return image
+    image = cv2.resize(image, None, fx=1/shrink_factor, fy=1/shrink_factor)
+    return image
 
-def stream_video(video_path):
+def stream_video(video_path, logger):
     video = cv2.VideoCapture(video_path)
     if not video.isOpened():
-        print("File not found:", video_path)
+        logger.error("File not found:", video_path)
         raise FileNotFoundError(video_path)
+    
+    if logger.is_log_level("INFO"):
+        index = 0
+        total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+        frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        logger.info(f"Video info [Total frames: {total_frames}, Original size: {frame_width}*{frame_height}px]")
     
     while video.isOpened():
         ret, frame = video.read()
         if not ret:
             break
+        if logger.is_log_level("INFO"):
+            index += 1
+            if index % 10 == 0:
+                logger.info(f"Processed [{index}/{total_frames}] frames...", end="")
+                logger.info("\r", end="")
         yield frame
 
 def load_random_file(directory, seed=0):
