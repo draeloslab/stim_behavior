@@ -6,4 +6,6 @@ playground.ipynb
 *.mp4
 *.svg
 *.png
+*.pickle
+*.npy
 517Final.ipynb

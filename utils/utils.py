@@ -190,7 +190,7 @@ def gaussian_filter_time(data):
         smt[filti, :] = gaussian_filter1d(data[filti, :].astype('float'), sigma=2)
     return smt
 
-def calculate_angle(p3,p2, p1):
+def calculate_angle(p1,p2,p3):
     #Calculate the angle at p2
     #Calculate the vectors
     v1 = np.array(p1) - np.array(p2)

@@ -8,10 +8,11 @@ from scipy.optimize import curve_fit
 import cv2
 import sys
 import deeplabcut
-# sys.path.append('/home/jakejoseph/Desktop/Joseph_Code/stim_behavior/utils')
-from utils.utils import calculate_angle
+import dlclive
+sys.path.append('../utils/')
+from utils import calculate_angle
 
-class DLCInterface():
+class DLCInterface:
     """
     A class that provides an interface for working with DeepLabCut.
 
@@ -83,7 +84,7 @@ class DLCInterface():
         """
         if model is None:
             model = deeplabcut.export_model(cfg_path=self.config, snapshotindex=-1, TFGPUinference=True, make_tar=False)
-        dlclive.benchmark_videos(model, video, resize=0.5, pcutoff=0.5)
+        dlclive.benchmark_videos(model, video, resize=0.5, pcutoff=0.5,output='benchmark_results')
     
     def plotInferenceTime(self, filepath):
         """
@@ -96,6 +97,7 @@ class DLCInterface():
             None
         """
         df = pd.read_pickle(filepath)
+        self.inferenceTimes = df['inference_times'][0]
         plt.plot(1/df['inference_times'][0])
         plt.xlabel('Frame')
         plt.ylabel('Frames Per Second')
