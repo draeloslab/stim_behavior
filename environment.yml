@@ -1,0 +1,20 @@
+name: stim_behavior
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9.18
+  - pip
+  - ipykernel
+  - numpy
+  - matplotlib
+  - pandas
+  - scikit-learn
+  - scipy
+  - seaborn
+  - pyyaml
+  - scikit-image
+  - openpyxl
+  - pip:
+    - deeplabcut-live
+    - prosvd

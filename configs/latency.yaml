@@ -5,7 +5,7 @@ path:
   
   output: exported_models/eval
   
-  working: work_dir/octo-1
+  # working: work_dir/octo-1
 
   model: exported_models/octopus_Tent6_mobilenet_keypoint5
 
