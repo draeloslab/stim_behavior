@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import cv2
 from scipy.ndimage import gaussian_filter1d
-from skimage import transform
-import h5py
+# from skimage import transform
+# import h5py
 from scipy import ndimage
 import os
 import random
@@ -215,3 +215,54 @@ def gaussian_filter_time(data):
     for filti in range(data.shape[0]):
         smt[filti, :] = gaussian_filter1d(data[filti, :].astype('float'), sigma=2)
     return smt
+
+def calculate_angle(p1,p2,p3):
+    #Calculate the angle at p2
+    #Calculate the vectors
+    v1 = np.array(p1) - np.array(p2)
+    v2 = np.array(p3) - np.array(p2)
+    #Calculate the angle
+    angle = np.arccos(np.dot(v1,v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
+    z = p3[1] - p1[1]
+    #Convert to degrees
+    angle = np.degrees(angle)
+    if z < 0:
+        angle = 360 - angle
+    return angle
+
+def calculate_angle_with_uncertainty(p1, p2, p3, sigma_mag):
+    # Calculate vectors
+    v1 = np.array(p1) - np.array(p2)
+    v2 = np.array(p3) - np.array(p2)
+
+    # Calculate dot product and magnitudes
+    a_dot_b = np.dot(v1, v2)
+    norm_v1 = np.linalg.norm(v1)
+    norm_v2 = np.linalg.norm(v2)
+
+    # Calculate cosine of the angle
+    cos_theta = a_dot_b / (norm_v1 * norm_v2)
+
+    # Calculate the angle in radians
+    angle = np.arccos(cos_theta)
+
+    # Convert the angle to degrees
+    angle_degrees = np.degrees(angle)
+
+    # Calculate partial derivatives for error propagation
+    partial_a_dot_b = 1 / (norm_v1 * norm_v2)
+    partial_norm_v1 = -a_dot_b / (norm_v1**2 * norm_v2)
+    partial_norm_v2 = -a_dot_b / (norm_v1 * norm_v2**2)
+
+    # Propagate the errors
+    sigma_cos_theta = np.sqrt((partial_a_dot_b * sigma_mag)**2 +
+                              (partial_norm_v1 * sigma_mag)**2 +
+                              (partial_norm_v2 * sigma_mag)**2)
+
+    # Calculate uncertainty in theta using derivative of arccos
+    sigma_theta = sigma_cos_theta / np.sqrt(1 - cos_theta**2)
+
+    # Convert uncertainty from radians to degrees
+    sigma_theta_degrees = np.degrees(sigma_theta)
+
+    return angle_degrees, sigma_theta_degrees
