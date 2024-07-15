@@ -2,10 +2,3 @@ __pycache__
 data/
 outputs/
 playground.ipynb
-*.gif
-*.mp4
-*.svg
-*.png
-*.pickle
-*.npy
-517Final.ipynb

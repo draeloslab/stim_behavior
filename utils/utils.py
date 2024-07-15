@@ -22,6 +22,19 @@ def stream_numpy_array(numpy_array, batch_size=1):
     for i in range(0, len(numpy_array), batch_size):
         yield numpy_array[i:i + batch_size]
 
+
+def stream_video(video_path):
+    video = cv2.VideoCapture(video_path)
+    if not video.isOpened():
+        print("File not found:", video_path)
+        raise FileNotFoundError(video_path)
+    
+    while video.isOpened():
+        ret, frame = video.read()
+        if not ret:
+            break
+        yield frame
+
 def load_random_file(directory, seed=0):
     # Set the seed for reproducibility
     random.seed(seed)
