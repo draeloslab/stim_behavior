@@ -1,8 +1,6 @@
-import numpy as np
-
 class DataManager:
-    def __init__(self):
-        self.data = {}
+    def __init__(self, keys=[]):
+        self.data = {key: [] for key in keys}
     
     def _print_key_error(self, key):
         print(f"Key '{key}' does not exist in the data manager.")
@@ -18,11 +16,12 @@ class DataManager:
             pop_count -= 1
 
     def add(self, key, value):
-        if key not in self.data:
-            self.data[key] = []
-        if value is not None:
-            self.add_nan(key, value.shape)
-        self.data[key].append(value)
+        if key in self.data:
+            if value is not None:
+                self.add_nan(key, value.shape)
+            self.data[key].append(value)
+        else:
+            self._print_key_error(key)
 
     def to_numpy(self):
         for key in self.data:

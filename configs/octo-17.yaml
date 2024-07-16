@@ -3,7 +3,7 @@ path:
   
   video: OctopusVideos/videos
   
-  xls: OctopusVideos/metadata.xlsx
+  xls: /nfs/turbo/umms-adraelos/sachinks/stim_behavior/metadata.xlsx
   
   working: work_dir/octo-17
 

@@ -3,25 +3,6 @@ import numpy as np
 import pandas as pd
 import cv2
 
-def get_stim_location(stim_type):
-    stim_type = stim_type.lower()
-    location = "Unknown"
-    locations = ["Distal" ,"Proximal", "Cord"]
-    for loc in locations:
-        if loc.lower() in stim_type:
-            location = loc
-            break
-    return location
-
-def get_stim_method(stim_type):
-    stim_type = stim_type.lower()
-    stimulus = "Unknown"
-    if ("touch" in stim_type) or ("pinch" in stim_type):
-        stimulus = "Mechanical"
-    elif ("electrical" in stim_type) or ("hz" in stim_type) or ("one stimulation" in stim_type):
-        stimulus = "Electrical"
-    return stimulus
-
 def convert_from_seconds_to_frames(interval, fps, time_margin):
     interval[-1][-1] = 0
     interval = np.array(interval)
@@ -161,17 +142,6 @@ def load_metadata(video_filename, total_frames, row, fps, init_frame=0, time_mar
         'filename': f'{classif}_{stim_type}_{video_filename}'
     }
     return metadata
-
-def read_octopus_xlsx(xls_path):
-    df = pd.read_excel(xls_path) 
-    df2 = df.copy()
-    df = df.drop(index=0)
-    df = df.rename(columns=df2.iloc[0])
-    df['Stim Location'] = df['Stimulation Type'].apply(get_stim_location)
-    df['Stim Method'] = df['Stimulation Type'].apply(get_stim_method)
-    df['Stimulation Class'] = df['Stim Location'] + ' ' + df['Stim Method']
-    df.reset_index(inplace=True)
-    return df
 
 def detect_crop_box(pose, frame_shape, threshold=0.9, margin=20):
     detected = pose[:, 2] > threshold
