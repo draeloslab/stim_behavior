@@ -15,6 +15,6 @@ def search_for_video_folder(root_folder):
 
 # Example usage
 if __name__ == "__main__":
-    root_folder = "Z:\Data\Monkeys\Joker"  # Replace this with the path to the top-level folder you want to search
+    root_folder = "/run/user/1004/gvfs/smb-share:server=cnpl-drmanhattan.engin.umich.edu,share=share/Data/Monkeys/War Machine"  # Replace this with the path to the top-level folder you want to search
     search_for_video_folder(root_folder)
 
