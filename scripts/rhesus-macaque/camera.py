@@ -113,6 +113,9 @@ class CameraStream:
 
             def frames_queued(self, sink: ic4.QueueSink):
                 buffer = sink.pop_output_buffer()
+                # TODO: Alternative way to run prediction on each frame?
+                # frame = buffer.numpy_copy()
+                # prediction =self.parent.run_inference(frame)
                 self.display.display_buffer(buffer)
                 with self.parent.frame_lock:
                     self.parent.latest_frame = buffer.numpy_copy()
@@ -171,6 +174,7 @@ def live_stream_all(properties: list[str] = None):
             for i, stream in enumerate(streams):
                 frame = stream.get_latest_frame()
                 prediction = stream.run_inference(frame) # TODO: Might decide to move this into a separate process or directly in the Image Buffer
+                print(prediction) #TODO need to add a way to display the prediction on the frame and store predictions to an array for later use
                 frame_count = stream.get_frame_count()
                 fps = stream.get_fps()
                 if frame is not None:
