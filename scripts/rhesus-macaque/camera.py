@@ -49,6 +49,29 @@ def set_properties(grabber: ic4.Grabber, properties: list[str]):
         print(f"Set {name} to {value}")
 
 class CameraStream:
+    """
+    Represents a camera stream.
+
+    Args:
+        dev (ic4.DeviceInfo): The device information for the camera.
+
+    Attributes:
+        dev (ic4.DeviceInfo): The device information for the camera.
+        grabber (ic4.Grabber): The grabber object for capturing frames from the camera.
+        display (ic4.FloatingDisplay): The display object for displaying frames.
+        running (bool): Indicates whether the camera stream is running.
+        latest_frame (numpy.ndarray): The latest captured frame.
+        frame_lock (threading.Lock): A lock for accessing the latest_frame.
+        frame_count (int): The number of frames captured.
+        start_time (float): The start time of the camera stream.
+
+    Methods:
+        start(): Starts the camera stream.
+        stop(): Stops the camera stream.
+        get_latest_frame(): Returns the latest captured frame.
+        get_frame_count(): Returns the number of frames captured.
+        get_fps(): Returns the frames per second (FPS) of the camera stream.
+    """
     def __init__(self, dev: ic4.DeviceInfo, properties: list[str] = None):
         self.dev = dev
         self.grabber = ic4.Grabber()
@@ -64,6 +87,9 @@ class CameraStream:
 
 
     def start(self):
+        """
+        Starts the camera stream.
+        """
         self.grabber.device_open(self.dev)
         self.grabber.device_property_map.set_value(ic4.PropId.TRIGGER_MODE, "Off")
         
@@ -71,6 +97,13 @@ class CameraStream:
             set_properties(self.grabber, self.properties)
 
         class ProcessAndDisplayListener(ic4.QueueSinkListener):
+            """
+            Listener class for processing and displaying frames from a camera stream.
+
+            Args:
+                display (ic4.Display): The display object used for displaying frames.
+                parent (CameraStream): The parent CameraStream object.
+            """
             def __init__(self, display: ic4.Display, parent: 'CameraStream'):
                 self.display = display
                 self.parent = parent
