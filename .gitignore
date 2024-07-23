@@ -2,3 +2,10 @@ __pycache__
 data/
 outputs/
 playground.ipynb
+*.txt
+*.csv
+*.json
+*.pickle
+*.lprof
+*.avi
+*.h5

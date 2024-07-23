@@ -9,8 +9,10 @@ import cv2
 import sys
 import deeplabcut
 import dlclive
-sys.path.append('../utils/')
+from line_profiler import profile
+sys.path.append('/home/jakejoseph/Desktop/Joseph_Code/stim_behavior/utils/')
 from utils import calculate_angle
+
 
 class DLCInterface:
     """
@@ -25,7 +27,7 @@ class DLCInterface:
         maxiters (int, optional): The maximum number of iterations for training. Defaults to 30000.
     """
 
-    def __init__(self, config=None, name=None, author=None, video=None, working_directory=None, maxiters=30000):
+    def __init__(self, config=None, name=None, author=None, video=None, working_directory=None):
         if config is None:
             self.config = deeplabcut.create_new_project(
                 name,
@@ -33,11 +35,31 @@ class DLCInterface:
                 video,
                 working_directory
             )
-            deeplabcut.label_frames(self.config)
-            deeplabcut.create_training_dataset(self.config, augmenter_type='imgaug')
-            deeplabcut.train_network(self.config, shuffle=1, displayiters=100, saveiters=1000, maxiters=maxiters)
+            deeplabcut.extract_frames(self.config, 'automatic', 'uniform', crop=False)
 
         self.config = config
+
+    def label(self):
+        """
+        Opens the DeepLabCut labeling GUI.
+
+        Returns:
+            None
+        """
+        deeplabcut.label_frames(self.config)
+
+    def train(self):
+        """
+        Trains the DeepLabCut network.
+
+        Args:
+            maxiters (int, optional): The maximum number of iterations for training. Defaults to 30000.
+
+        Returns:
+            None
+        """
+        deeplabcut.create_training_dataset(self.config, augmenter_type='imgaug', net_type='mobilenet_v2_1.0')
+        deeplabcut.train_network(self.config, shuffle=1)
 
     def analyze(self, path, video=False):
         """
@@ -69,7 +91,7 @@ class DLCInterface:
         deeplabcut.create_training_dataset(self.config, net_type='resnet_50', augmenter_type='imgaug')
         # TODO: add automated version to change initial weights of the pose_cfg.yaml file to the latest iteration and to auto set max_input_size to 2000 otherwise training won't start
         deeplabcut.train_network(self.config, shuffle=1, displayiters=100, saveiters=1000, maxiters=maxiters)
-
+    @profile
     def benchmark(self, video, model=None):
         """
         Perform benchmarking on a video using a DeepLabCut model.
@@ -84,7 +106,8 @@ class DLCInterface:
         """
         if model is None:
             model = deeplabcut.export_model(cfg_path=self.config, snapshotindex=-1, TFGPUinference=True, make_tar=False)
-        dlclive.benchmark_videos(model, video, resize=0.5, pcutoff=0.5,output='benchmark_results')
+        dlclive.benchmark_videos(model, video, resize=0.5, pcutoff=0.5,output='benchmark_results',display=False, display_radius=15,dynamic=(True, 0.4, 30))
+
     
     def plotInferenceTime(self, filepath):
         """
@@ -98,14 +121,13 @@ class DLCInterface:
         """
         df = pd.read_pickle(filepath)
         self.inferenceTimes = df['inference_times'][0]
+        plt.figure(figsize=(15, 5))
         plt.plot(1/df['inference_times'][0])
         plt.xlabel('Frame')
         plt.ylabel('Frames Per Second')
-        plt.title('Inference Time)')
+        plt.title('Inference Time')
         plt.show()
-
-
-
+    
 class DataLoader:
     """
     This class loads in NHP predicted joint angles and extracts angles and does preprocessing.
@@ -431,4 +453,6 @@ def plotDecay(data1, data2):
     plt.show()
 
 if __name__ == "__main__":
-    pass
+    model = DLCInterface('/home/jakejoseph/Desktop/Joseph_Code/CentralNHPTracker-Jake-2024-07-19/config.yaml')
+    model.benchmark('/home/jakejoseph/Desktop/Joseph_Code/CentralNHPTracker-Jake-2024-07-19/videos/rhodesfatigueEDC24_6_20.mp4',
+                '/home/jakejoseph/Desktop/Joseph_Code/CentralNHPTracker-Jake-2024-07-19/exported-models/DLC_CentralNHPTracker_mobilenet_v2_1.0_iteration-0_shuffle-1')
