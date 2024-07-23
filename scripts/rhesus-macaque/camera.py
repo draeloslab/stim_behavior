@@ -9,6 +9,7 @@ import keyboard
 import argparse
 import imagingcontrol4 as ic4
 import numpy as np
+from dlclive import DLCLive
 
 class ImageType(Enum):
     """Supported image types for saving."""
@@ -58,6 +59,9 @@ class CameraStream:
         self.frame_count = 0
         self.start_time = time.time()
         self.properties = properties
+        self.dlclive = DLCLive('/home/jakejoseph/Desktop/Joseph_Code/CentralNHPTracker-Jake-2024-07-19/exported-models/DLC_CentralNHPTracker_mobilenet_v2_1.0_iteration-0_shuffle-1')
+        # TODO: Add DLC model path as an argument or in config file
+
 
     def start(self):
         self.grabber.device_open(self.dev)
@@ -107,6 +111,10 @@ class CameraStream:
     def get_fps(self):
         elapsed_time = time.time() - self.start_time
         return self.frame_count / elapsed_time if elapsed_time > 0 else 0
+    
+    def run_inference(self, frame: np.ndarray):
+        self.dlclive.init_inference(frame)
+        return self.dlclive.get_pose(frame)
 
 def live_stream_all(properties: list[str] = None):
     """Start a live stream display for all available devices and return frames."""
@@ -129,6 +137,7 @@ def live_stream_all(properties: list[str] = None):
             print("----------------------")
             for i, stream in enumerate(streams):
                 frame = stream.get_latest_frame()
+                prediction = stream.run_inference(frame) # TODO: Might decide to move this into a separate process or directly in the Image Buffer
                 frame_count = stream.get_frame_count()
                 fps = stream.get_fps()
                 if frame is not None:
