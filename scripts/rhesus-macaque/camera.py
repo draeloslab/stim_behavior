@@ -9,6 +9,7 @@ import keyboard
 import argparse
 import imagingcontrol4 as ic4
 import numpy as np
+from dlclive import DLCLive
 
 class ImageType(Enum):
     """Supported image types for saving."""
@@ -39,6 +40,14 @@ def get_device(serial: str):
             return dev
     return None
 
+def set_properties(grabber: ic4.Grabber, properties: list[str]):
+    """Set camera properties."""
+    props = grabber.device_property_map
+    for prop in properties:
+        name, value = prop.split("=")
+        props.set_value(name, value)
+        print(f"Set {name} to {value}")
+
 class CameraStream:
     """
     Represents a camera stream.
@@ -63,8 +72,7 @@ class CameraStream:
         get_frame_count(): Returns the number of frames captured.
         get_fps(): Returns the frames per second (FPS) of the camera stream.
     """
-
-    def __init__(self, dev: ic4.DeviceInfo):
+    def __init__(self, dev: ic4.DeviceInfo, properties: list[str] = None):
         self.dev = dev
         self.grabber = ic4.Grabber()
         self.display = ic4.FloatingDisplay()
@@ -73,6 +81,10 @@ class CameraStream:
         self.frame_lock = threading.Lock()
         self.frame_count = 0
         self.start_time = time.time()
+        self.properties = properties
+        self.dlclive = DLCLive('/home/jakejoseph/Desktop/Joseph_Code/CentralNHPTracker-Jake-2024-07-19/exported-models/DLC_CentralNHPTracker_mobilenet_v2_1.0_iteration-0_shuffle-1')
+        # TODO: Add DLC model path as an argument or in config file
+
 
     def start(self):
         """
@@ -80,6 +92,9 @@ class CameraStream:
         """
         self.grabber.device_open(self.dev)
         self.grabber.device_property_map.set_value(ic4.PropId.TRIGGER_MODE, "Off")
+        
+        if self.properties:
+            set_properties(self.grabber, self.properties)
 
         class ProcessAndDisplayListener(ic4.QueueSinkListener):
             """
@@ -89,35 +104,18 @@ class CameraStream:
                 display (ic4.Display): The display object used for displaying frames.
                 parent (CameraStream): The parent CameraStream object.
             """
-
             def __init__(self, display: ic4.Display, parent: 'CameraStream'):
                 self.display = display
                 self.parent = parent
 
             def sink_connected(self, sink: ic4.QueueSink, image_type: ic4.ImageType, min_buffers_required: int) -> bool:
-                """
-                Callback function called when a sink is connected.
-
-                Args:
-                    sink (ic4.QueueSink): The connected sink.
-                    image_type (ic4.ImageType): The type of image received.
-                    min_buffers_required (int): The minimum number of buffers required.
-
-                Returns:
-                    bool: True if the sink is connected successfully, False otherwise.
-
-                """
                 return True
 
             def frames_queued(self, sink: ic4.QueueSink):
-                """
-                Callback function called when frames are queued in the sink.
-
-                Args:
-                    sink (ic4.QueueSink): The sink containing the queued frames.
-
-                """
                 buffer = sink.pop_output_buffer()
+                # TODO: Alternative way to run prediction on each frame?
+                # frame = buffer.numpy_copy()
+                # prediction =self.parent.run_inference(frame)
                 self.display.display_buffer(buffer)
                 with self.parent.frame_lock:
                     self.parent.latest_frame = buffer.numpy_copy()
@@ -136,49 +134,33 @@ class CameraStream:
         self.grabber.device_close()
 
     def stop(self):
-        """
-        Stops the camera stream.
-        """
         self.running = False
 
     def get_latest_frame(self):
-        """
-        Returns the latest captured frame.
-
-        Returns:
-            numpy.ndarray: The latest captured frame, or None if no frame has been captured yet.
-        """
         with self.frame_lock:
             return self.latest_frame.copy() if self.latest_frame is not None else None
 
     def get_frame_count(self):
-        """
-        Returns the number of frames captured.
-
-        Returns:
-            int: The number of frames captured.
-        """
         with self.frame_lock:
             return self.frame_count
 
     def get_fps(self):
-        """
-        Returns the frames per second (FPS) of the camera stream.
-
-        Returns:
-            float: The frames per second (FPS) of the camera stream.
-        """
         elapsed_time = time.time() - self.start_time
         return self.frame_count / elapsed_time if elapsed_time > 0 else 0
+    
+    def run_inference(self, frame: np.ndarray):
+        self.dlclive.init_inference(frame)
+        return self.dlclive.get_pose(frame)
+        
 
-def live_stream_all():
+def live_stream_all(properties: list[str] = None):
     """Start a live stream display for all available devices and return frames."""
     devices = ic4.DeviceEnum().devices()
     if not devices:
         print("No devices found.")
         return
 
-    streams = [CameraStream(dev) for dev in devices]
+    streams = [CameraStream(dev, properties) for dev in devices]
     threads = [threading.Thread(target=stream.start) for stream in streams]
 
     for thread in threads:
@@ -192,6 +174,8 @@ def live_stream_all():
             print("----------------------")
             for i, stream in enumerate(streams):
                 frame = stream.get_latest_frame()
+                prediction = stream.run_inference(frame) # TODO: Might decide to move this into a separate process or directly in the Image Buffer
+                print(prediction) #TODO need to add a way to display the prediction on the frame and store predictions to an array for later use
                 frame_count = stream.get_frame_count()
                 fps = stream.get_fps()
                 if frame is not None:
@@ -217,7 +201,8 @@ def main():
     subparsers.add_parser("list", help="List available devices")
 
     # Live stream (all cameras)
-    subparsers.add_parser("live", help="Display live stream from all available devices and extract frames")
+    live_parser = subparsers.add_parser("live", help="Display live stream from all available devices and extract frames")
+    live_parser.add_argument("--properties", "-p", nargs="+", help="List of properties to be set. (e.g. -p Width=1920 Height=1080 AcquisitionFrameRate=30)")
 
     args = parser.parse_args()
 
@@ -227,7 +212,7 @@ def main():
         if args.command == "list":
             list_devices()
         elif args.command == "live":
-            live_stream_all()
+            live_stream_all(args.properties)
     finally:
         ic4.Library.exit()
 
