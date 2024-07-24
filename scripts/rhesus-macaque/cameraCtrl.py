@@ -11,7 +11,7 @@ import time
 from enum import Enum
 from typing import Optional
 import sys
-import keyboard
+# import keyboard
 
 import textwrap
 import argparse

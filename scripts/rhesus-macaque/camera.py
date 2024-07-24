@@ -1,15 +1,14 @@
-#!/usr/bin/env python3
 
 import time
 import threading
 import os
 from enum import Enum
 import sys
-import keyboard
+# import keyboard
 import argparse
 import imagingcontrol4 as ic4
 import numpy as np
-from dlclive import DLCLive
+# from dlclive import DLCLive
 
 class ImageType(Enum):
     """Supported image types for saving."""
@@ -82,7 +81,7 @@ class CameraStream:
         self.frame_count = 0
         self.start_time = time.time()
         self.properties = properties
-        self.dlclive = DLCLive('/home/jakejoseph/Desktop/Joseph_Code/CentralNHPTracker-Jake-2024-07-19/exported-models/DLC_CentralNHPTracker_mobilenet_v2_1.0_iteration-0_shuffle-1')
+        # self.dlclive = DLCLive('/home/jakejoseph/Desktop/Joseph_Code/CentralNHPTracker-Jake-2024-07-19/exported-models/DLC_CentralNHPTracker_mobilenet_v2_1.0_iteration-0_shuffle-1')
         # TODO: Add DLC model path as an argument or in config file
 
 
@@ -173,8 +172,8 @@ def live_stream_all(properties: list[str] = None):
             print("----------------------")
             for i, stream in enumerate(streams):
                 frame = stream.get_latest_frame()
-                prediction = stream.run_inference(frame) # TODO: Might decide to move this into a separate process or directly in the Image Buffer
-                print(prediction) #TODO need to add a way to display the prediction on the frame and store predictions to an array for later use
+                # prediction = stream.run_inference(frame) # TODO: Might decide to move this into a separate process or directly in the Image Buffer
+                # print(prediction) #TODO need to add a way to display the prediction on the frame and store predictions to an array for later use
                 frame_count = stream.get_frame_count()
                 fps = stream.get_fps()
                 if frame is not None:
