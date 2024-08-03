@@ -18,3 +18,4 @@ dependencies:
   - pip:
     - deeplabcut-live
     - prosvd
+    - suite2p # treeshrew

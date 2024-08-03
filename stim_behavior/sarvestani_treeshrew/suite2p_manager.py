@@ -1,9 +1,9 @@
 import os
 import sys
 import suite2p
-from packages.manager import ManagerBase
-from utils.logger import Logger
-from utils.utils import *
+from .manager import ManagerBase
+from stim_behavior.utils.logger import Logger
+from stim_behavior.utils.utils import *
 
 
 class Suite2pManager(ManagerBase):

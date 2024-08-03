@@ -1,0 +1,4 @@
+video_fps: 15
+twop_fps: 30
+prosvd_k: 4 # no. of dims to reduce to
+prosvd_init_frame: 100 # No of initial frames used to initialize proSVD

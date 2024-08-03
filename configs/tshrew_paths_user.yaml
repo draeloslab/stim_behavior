@@ -1,0 +1,44 @@
+proj_path: '/home/sachinks/draelos/treeshrew_2p'
+raw_data: '/nfs/turbo/umms-adraelos/sachinks/treeshrew_2p/'
+processed_data: '/nfs/turbo/umms-adraelos/sachinks/treeshrew_2p/processed/'
+plots: '/nfs/turbo/umms-adraelos/sachinks/treeshrew_2p/plots'
+session:
+  s44:
+    t1:
+      eye_video: 'Justin_Eye2023-10-09T15_03_49.avi'
+      face_video: 'Justin_Face2023-10-09T15_03_49.avi'
+      dlc_xyp: 'Justin_Eye2023-10-09T15_03_49DLC_resnet50_JustinEyeJul19shuffle1_400000.csv'
+    t2:
+      eye_video: 'Justin_Eye2023-10-09T15_13_04.avi'
+      face_video: 'Justin_Face2023-10-09T15_13_04.avi'
+      dlc_xyp: 'Justin_Eye2023-10-09T15_13_04DLC_resnet50_JustinEyeJul19shuffle1_400000.csv'
+    t3:
+      eye_video: 'Justin_Eye2023-10-09T15_20_36.avi'
+      face_video: 'Justin_Face2023-10-09T15_20_36.avi'
+      dlc_xyp: 'Justin_Eye2023-10-09T15_20_36DLC_resnet50_JustinEyeJul19shuffle1_400000.csv'
+    t4:
+      eye_video: 'Justin_Eye2023-10-09T15_27_31.avi'
+      face_video: 'Justin_Face2023-10-09T15_27_31.avi'
+      dlc_xyp: 'Justin_Eye2023-10-09T15_27_31DLC_resnet50_JustinEyeJul19shuffle1_400000.csv'
+  s45:
+    t1:
+      eye_video: 'Justin_Eye2023-10-25T15_26_35.avi'
+      face_video: 'Justin_Face2023-10-25T15_26_35.avi'
+      dlc_xyp: 'Justin_Eye2023-10-25T15_36_34DLC_resnet50_JustinEyeJul19shuffle1_400000.csv'
+    t2:
+      eye_video: 'Justin_Eye2023-10-25T15_32_57.avi'
+      face_video: 'Justin_Face2023-10-25T15_32_57.avi'
+      dlc_xyp: 'Justin_Eye2023-10-25T15_32_57DLC_resnet50_JustinEyeJul19shuffle1_400000.csv'
+    t3:
+      eye_video: 'Justin_Eye2023-10-25T15_36_34.avi'
+      face_video: 'Justin_Face2023-10-25T15_36_34.avi'
+      dlc_xyp: 'Justin_Eye2023-10-25T15_36_34DLC_resnet50_JustinEyeJul19shuffle1_400000.csv'
+  s46:
+    t1:
+      eye_video: 'Justin_Eye2023-11-01T13_40_38.avi'
+      face_video: 'Justin_Face2023-11-01T13_40_38.avi'
+      dlc_xyp: 'Justin_Eye2023-11-01T13_40_38DLC_resnet50_JustinEyeJul19shuffle1_400000.csv'
+    t2:
+      eye_video: 'Justin_Eye2023-11-01T13_49_55.avi'
+      face_video: 'Justin_Face2023-11-01T13_49_55.avi'
+      dlc_xyp: 'Justin_Eye2023-11-01T13_49_55DLC_resnet50_JustinEyeJul19shuffle1_400000.csv'

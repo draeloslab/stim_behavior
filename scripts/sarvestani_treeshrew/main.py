@@ -34,7 +34,6 @@ def main(args):
         ["46", "t1"],
         ["46", "t2"],
     ]
-    breakpoint()
     if not args.run_all:
         sessions = sessions[:1]
     

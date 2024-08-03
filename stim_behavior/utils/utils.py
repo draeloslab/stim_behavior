@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 import cv2
 from scipy.ndimage import gaussian_filter1d
-# from skimage import transform
-# import h5py
+import yaml
 from scipy import ndimage
 import os
 import random
@@ -54,6 +53,18 @@ def stream_video(video_path, logger):
                 logger.info(f"Processed [{index}/{total_frames}] frames...", end="")
                 logger.info("\r", end="")
         yield frame
+
+def load_config(config_file, override_file=None, config_dir=f"configs"):
+    config_path = f'{config_dir}/{config_file}.yaml'
+    with open(config_path, 'r') as file:
+        config = yaml.safe_load(file)
+
+    if override_file:
+        config_path = f'{config_dir}/{override_file}.yaml'
+        with open(config_path, 'r') as file:
+            overrides = yaml.safe_load(file)
+        config.update(overrides)
+    return config
 
 def load_random_file(directory, seed=0):
     random.seed(seed)
