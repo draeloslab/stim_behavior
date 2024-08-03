@@ -1,2 +1,8 @@
 __pycache__
+/data
 *.egg-info
+*.pickle
+*.txt
+*.lprof
+*.h5
+*.avi

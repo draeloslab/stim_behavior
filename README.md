@@ -2,6 +2,20 @@
 
 Behavioral analysis is performed on animals such as Octopus, Monkey and Mice using transfer learning tools like [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut) and steaming dimension reductions tools like [proSVD](https://github.com/draeloslab/prosvd).
 
+## Quickstart
+```
+# download the repo
+git clone https://github.com/draeloslab/stim_behavior
+cd stim_behavior
+
+# install dependencies
+conda env create --file=environment.yml
+
+# install the repo locally
+conda activate stim_behavior
+pip install -e .
+```
+
 ## Musall-mice project
 * Link to the Paper -> [https://pubmed.ncbi.nlm.nih.gov/31551604/](https://pubmed.ncbi.nlm.nih.gov/31551604/)
 * Download (raw) data from -> [https://labshare.cshl.edu/shares/library/repository/38599/2pData/Animals/](https://labshare.cshl.edu/shares/library/repository/38599/2pData/Animals/)
