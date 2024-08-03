@@ -31,3 +31,14 @@ Applying DeepLabCut for real time hand tracking in collaboration with the Cheste
 - - cameraCtrl.py and camera.py: current camera interfaces for recording and accessed Imaging Source camera frames during NHP experiments. Use python cameraCtrl.py -h for help
 - - dataLoader.py: Class used to access DLC models for training and refining. dlcLiveTesting is an example notebook that walks through how to use DLC with exisiting NHP data. DataLoader class is used to preprocess and analyze DLC and SLEAP csv files. Use dmpFatigueFigure for an example notebook walking through the class.
 
+## Sarvestani-treeshrew project
+Tree shrew with cranial window over V1, with Gcamp8s injected. Eye tracking camera records face and eye. 2P recording of neurons in V1. Original experiment and data collection by: Madineh Sarvestani @ MPFI/Cornell.
+
+### Setup data
+1. Download the data from this dropbox link here: [Link](https://www.dropbox.com/scl/fo/xmvk5pmog323oppam80tn/h?rlkey=tl4u08bmos38lpaf0f79zn57c&dl=0).
+2. Unzip and move it to a folder of your choice
+
+### Execute
+1. Run `python scripts/sarvestani_treeshrew/main.py` to extract the flourescence signals from the raw data using the suite2p package.
+2. Suffix `-h` to understand command-line args.
+
