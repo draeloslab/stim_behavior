@@ -42,3 +42,10 @@ Tree shrew with cranial window over V1, with Gcamp8s injected. Eye tracking came
 1. Run `python scripts/sarvestani_treeshrew/main.py` to extract the flourescence signals from the raw data using the suite2p package.
 2. Suffix `-h` to understand command-line args.
 
+## Pelled-octopus project
+### Setup data
+1. Download sample videos of the octopus experiement conducted in Dr.Pelled lab (MSU) from this dropbox link here: [Link](https://www.dropbox.com/scl/fo/2fmw5bhcjtio235lebxqs/AGMrKvDIy7BczYjE1wn9m0I?rlkey=4jq9k1e260vx0jn2srwx68hbw&dl=0).
+
+### Execute
+1. Execute `scripts/pelled_octopus/dlc_compute_octopus.py` to perform deeplabcut analysis on the octopus videos.
+2. Execute `scripts/pelled_octopus/prosvd_compute_octopus.py` to perform prosvd analysis on the octopus videos.
