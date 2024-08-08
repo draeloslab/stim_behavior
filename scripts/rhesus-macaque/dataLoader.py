@@ -7,9 +7,9 @@ from scipy.signal import find_peaks
 from scipy.optimize import curve_fit
 import cv2
 import sys
-import deeplabcut
-import dlclive
-sys.path.append('../utils/')
+# import deeplabcut
+# import dlclive
+sys.path.append('/home/jakejoseph/Desktop/Joseph_Code/stim_behavior/stim_behavior/utils')
 from utils import calculate_angle
 
 class DLCInterface:
@@ -431,4 +431,5 @@ def plotDecay(data1, data2):
     plt.show()
 
 if __name__ == "__main__":
-    pass
+    test = DataLoader("test", "/home/jakejoseph/Desktop/AllAngles-Jake-2024-07-30/videos/03-05DLC_mobnet_100_AllAnglesJul30shuffle1_700000.csv", 0.9, 40)
+    test.plot(slice=[1290, 6000])
