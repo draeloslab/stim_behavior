@@ -170,6 +170,8 @@ class DataLoader:
 
         wristAngle = []
         indexAngle = []
+        # self.forearms = []
+        # self.wrists = []
         self.x = []
         self.y = []
         for i in range(len(data)):  # save angle for each posture for all frames
