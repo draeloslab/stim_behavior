@@ -237,7 +237,7 @@ def calculate_angle(p1,p2,p3):
     z = p3[1] - p1[1]
     #Convert to degrees
     angle = np.degrees(angle)
-    if z < 0:
+    if z > 0:
         angle = 360 - angle
     return angle
 
